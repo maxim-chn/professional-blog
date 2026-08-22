@@ -1,0 +1,5 @@
+1. Collaboration between development Agent and project management platforms
+  - Monday.com:
+    - permission problems post-ChatGPT authorization (for example, board creation)
+  - OpenAI:
+    - cooperation between different Agents is not "plumbed" despite being under the same company. What are the reasons? How uncormfortable are the workarounds?
