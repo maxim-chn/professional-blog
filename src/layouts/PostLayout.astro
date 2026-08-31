@@ -1,0 +1,66 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import ArtifactSandbox from '@components/ArtifactSandbox.astro';
+import BaseLayout from '@layouts/BaseLayout.astro';
+
+type Props = {
+  post: CollectionEntry<'blog'>;
+};
+
+const { post } = Astro.props;
+const { title, description, publishDate, artifact } = post.data;
+---
+
+<BaseLayout title={`${title} | Professional Blog`} description={description}>
+  <article class="post">
+    <header class="post__header">
+      <p class="post__date">
+        <time datetime={publishDate.toISOString()}>{publishDate.toLocaleDateString('en', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        })}</time>
+      </p>
+      <h1>{title}</h1>
+      <p>{description}</p>
+    </header>
+
+    <div class="post__body">
+      <slot />
+    </div>
+
+    {artifact && <ArtifactSandbox src={artifact.src} title={artifact.title} height={artifact.height} />}
+  </article>
+</BaseLayout>
+
+<style>
+  .post__header {
+    border-bottom: 1px solid var(--color-border);
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+  }
+
+  .post__date {
+    color: var(--color-muted);
+    margin: 0 0 0.5rem;
+  }
+
+  h1 {
+    font-size: clamp(2.2rem, 6vw, 4rem);
+    line-height: 1;
+    margin: 0 0 1rem;
+  }
+
+  .post__header p:last-child {
+    color: var(--color-muted);
+    font-size: 1.15rem;
+    margin: 0;
+    max-width: 44rem;
+  }
+
+  .post__body :global(h2) {
+    font-size: 1.55rem;
+    line-height: 1.2;
+    margin-top: 2rem;
+  }
+</style>

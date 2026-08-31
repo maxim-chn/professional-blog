@@ -1,0 +1,81 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '@layouts/BaseLayout.astro';
+
+const posts = (await getCollection('blog'))
+  .filter((post) => !post.data.draft)
+  .sort((a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf());
+---
+
+<BaseLayout
+  title="Professional Blog"
+  description="Engineering notes, small software projects, and executable artifacts."
+>
+  <section class="intro">
+    <p>Personal engineering blog</p>
+    <h1>Notes, experiments, and runnable software artifacts.</h1>
+  </section>
+
+  <section class="post-list" aria-label="Published posts">
+    {
+      posts.map((post) => (
+        <article class="post-card">
+          <p>{post.data.publishDate.toLocaleDateString('en', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          })}</p>
+          <h2>
+            <a href={`/blog/${post.id}/`}>{post.data.title}</a>
+          </h2>
+          <p>{post.data.description}</p>
+        </article>
+      ))
+    }
+  </section>
+</BaseLayout>
+
+<style>
+  .intro {
+    border-bottom: 1px solid var(--color-border);
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+  }
+
+  .intro p {
+    color: var(--color-accent);
+    font-weight: 700;
+    margin: 0 0 0.75rem;
+    text-transform: uppercase;
+  }
+
+  .intro h1 {
+    font-size: clamp(2.3rem, 7vw, 4.5rem);
+    line-height: 0.98;
+    margin: 0;
+    max-width: 12ch;
+  }
+
+  .post-list {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .post-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 1rem;
+  }
+
+  .post-card p {
+    color: var(--color-muted);
+    margin: 0;
+  }
+
+  .post-card h2 {
+    font-size: 1.25rem;
+    line-height: 1.25;
+    margin: 0.35rem 0;
+  }
+</style>

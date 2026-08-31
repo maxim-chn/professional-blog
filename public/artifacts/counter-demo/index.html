@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Independent Counter Demo</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+      }
+
+      body {
+        align-items: center;
+        background: #102a43;
+        color: #f8fafc;
+        display: grid;
+        margin: 0;
+        min-height: 100vh;
+        padding: 1rem;
+      }
+
+      main {
+        margin: 0 auto;
+        max-width: 28rem;
+        width: 100%;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+        line-height: 1.2;
+        margin: 0 0 0.75rem;
+      }
+
+      p {
+        color: #cbd5e1;
+        margin: 0 0 1.25rem;
+      }
+
+      button {
+        background: #f59e0b;
+        border: 0;
+        border-radius: 6px;
+        color: #1f2937;
+        cursor: pointer;
+        font: inherit;
+        font-weight: 700;
+        padding: 0.75rem 1rem;
+      }
+
+      output {
+        display: block;
+        font-size: 3rem;
+        font-weight: 800;
+        line-height: 1;
+        margin-bottom: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Standalone HTML + JavaScript</h1>
+      <p>This artifact has no dependency on Astro and can be developed independently.</p>
+      <output id="count" aria-live="polite">0</output>
+      <button id="increment" type="button">Increment</button>
+    </main>
+    <script>
+      const count = document.querySelector('#count');
+      const increment = document.querySelector('#increment');
+      let value = 0;
+
+      increment.addEventListener('click', () => {
+        value += 1;
+        count.textContent = String(value);
+      });
+    </script>
+  </body>
+</html>
