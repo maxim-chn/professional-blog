@@ -15,11 +15,15 @@ const { title, description, publishDate, artifact } = post.data;
   <article class="post">
     <header class="post__header">
       <p class="post__date">
-        <time datetime={publishDate.toISOString()}>{publishDate.toLocaleDateString('en', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        })}</time>
+        <time datetime={publishDate.toISOString()}
+          >{
+            publishDate.toLocaleDateString('en', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            })
+          }</time
+        >
       </p>
       <h1>{title}</h1>
       <p>{description}</p>
@@ -29,7 +33,15 @@ const { title, description, publishDate, artifact } = post.data;
       <slot />
     </div>
 
-    {artifact && <ArtifactSandbox src={artifact.src} title={artifact.title} height={artifact.height} />}
+    {
+      artifact && (
+        <ArtifactSandbox
+          src={artifact.src}
+          title={artifact.title}
+          height={artifact.height}
+        />
+      )
+    }
   </article>
 </BaseLayout>
 

@@ -4,9 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "astro dev",
-    "build": "astro check && astro build",
-    "preview": "astro preview",
+    "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev",
+    "build": "ASTRO_TELEMETRY_DISABLED=1 astro build",
+    "check": "ASTRO_TELEMETRY_DISABLED=1 astro check",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "quality": "npm run format:check && npm run lint && npm run check && npm run build",
+    "preview": "ASTRO_TELEMETRY_DISABLED=1 astro preview",
     "start": "node ./dist/server/entry.mjs"
   },
   "dependencies": {
@@ -15,6 +19,15 @@
     "astro": "7.2.9"
   },
   "devDependencies": {
-    "typescript": "7.0.2"
+    "@astrojs/check": "^0.9.10",
+    "@eslint/js": "^10.0.1",
+    "@typescript-eslint/parser": "^8.69.0",
+    "eslint": "^10.9.1",
+    "eslint-plugin-astro": "^1.5.0",
+    "globals": "^17.12.0",
+    "prettier": "^3.9.6",
+    "prettier-plugin-astro": "^0.14.1",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.69.0"
   }
 }

@@ -20,11 +20,13 @@ const posts = (await getCollection('blog'))
     {
       posts.map((post) => (
         <article class="post-card">
-          <p>{post.data.publishDate.toLocaleDateString('en', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          })}</p>
+          <p>
+            {post.data.publishDate.toLocaleDateString('en', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            })}
+          </p>
           <h2>
             <a href={`/blog/${post.id}/`}>{post.data.title}</a>
           </h2>
