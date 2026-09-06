@@ -1,0 +1,109 @@
+{
+  "issue": {
+    "name": "render-undefined-entry-artifact-boundary",
+    "summary": "Visiting the blog detail URL for artifact-boundary fails with Astro RenderUndefinedEntryError.",
+    "expected_behavior": "A request to /blog/artifact-boundary/ should render the MDX blog post and its associated artifact section.",
+    "observed_behavior": "The route returns HTTP 500 with RenderUndefinedEntryError while rendering the blog detail page."
+  },
+  "reproduction": {
+    "status": "reproduced",
+    "method": "Started Astro dev server in foreground with ASTRO_TELEMETRY_DISABLED=1 ASTRO_DEV_BACKGROUND=1 npx astro dev --host 127.0.0.1 --port 4321 --ignore-lock; Astro selected http://127.0.0.1:4323/ because ports 4321 and 4322 were in use. Requested http://127.0.0.1:4323/blog/artifact-boundary/ with curl -i.",
+    "environment": "macOS workspace at /Users/maximc/personal-blog-workspace/professional-blog; Node v25.4.0; npm 11.7.0; Astro 7.2.9; @astrojs/node adapter with output: server.",
+    "observations": [
+      "The request returned HTTP/1.1 500 Internal Server Error.",
+      "The response body contained <title>RenderUndefinedEntryError</title>.",
+      "The dev log warned that getStaticPaths() is ignored in dynamic page /src/pages/blog/[...slug].astro.",
+      "The dev log then reported RenderUndefinedEntryError at src/pages/blog/[...slug].astro:15."
+    ]
+  },
+  "evidence": [
+    {
+      "type": "reproduction",
+      "summary": "The active dev server returned HTTP 500 for /blog/artifact-boundary/.",
+      "location": "curl -i http://127.0.0.1:4323/blog/artifact-boundary/",
+      "significance": "Confirms the user-reported route failure is observable locally."
+    },
+    {
+      "type": "log",
+      "summary": "Astro logged: getStaticPaths() ignored in dynamic page /src/pages/blog/[...slug].astro.",
+      "location": "Astro dev server log during the failing request",
+      "significance": "Shows that the route's static path props are not being applied in this SSR dynamic page."
+    },
+    {
+      "type": "stack_trace",
+      "summary": "RenderUndefinedEntryError occurred at renderEntry, called by src/pages/blog/[...slug].astro:15.",
+      "location": "Astro dev server log and stack trace",
+      "significance": "Identifies the failing operation as render(post) receiving an undefined content entry."
+    },
+    {
+      "type": "source",
+      "summary": "src/pages/blog/[...slug].astro defines getStaticPaths() returning props: { post }, then reads const { post } = Astro.props and calls await render(post).",
+      "location": "src/pages/blog/[...slug].astro:5-15",
+      "significance": "Explains why ignoring getStaticPaths() leaves post undefined at runtime."
+    },
+    {
+      "type": "config",
+      "summary": "astro.config.mjs sets output: 'server' and uses @astrojs/node in standalone mode.",
+      "location": "astro.config.mjs:5-10",
+      "significance": "Establishes that the app is running as SSR, where this dynamic route is not prerendered by default."
+    },
+    {
+      "type": "source",
+      "summary": "The blog collection exists and includes src/content/blog/artifact-boundary.mdx with valid frontmatter; the index page links to /blog/${post.id}/.",
+      "location": "src/content.config.ts, src/content/blog/artifact-boundary.mdx, src/pages/index.astro",
+      "significance": "Supports that the content entry itself is present and the failure is localized to detail-route entry resolution/props."
+    },
+    {
+      "type": "test",
+      "summary": "npm run check and npm run build both completed successfully; build emitted the same getStaticPaths ignored warning.",
+      "location": "npm run check; npm run build",
+      "significance": "Confirms static validation/build do not fail, while still surfacing the routing-mode mismatch warning."
+    }
+  ],
+  "fault_localization": {
+    "likely_boundary": "src/pages/blog/[...slug].astro relying on getStaticPaths()/Astro.props.post in a non-prerendered SSR dynamic route.",
+    "related_areas": [
+      "src/pages/blog/[...slug].astro",
+      "Astro content render(post)",
+      "Astro SSR routing with output: server",
+      "astro.config.mjs @astrojs/node adapter configuration"
+    ],
+    "reasoning": "The route obtains post exclusively from Astro.props populated by getStaticPaths(), but Astro reports that getStaticPaths() is ignored for this dynamic SSR page. Consequently Astro.props.post is undefined during the runtime request, and passing that undefined value to render() triggers RenderUndefinedEntryError."
+  },
+  "hypotheses": [
+    {
+      "rank": 1,
+      "hypothesis": "The blog detail page is authored as a prerender/static route but is running as a dynamic SSR route, so getStaticPaths() props are absent and render(post) receives undefined.",
+      "supporting_evidence": [
+        "Astro logs that getStaticPaths() is ignored in /src/pages/blog/[...slug].astro.",
+        "The failing line is await render(post) after const { post } = Astro.props.",
+        "astro.config.mjs sets output: 'server'.",
+        "The content entry file exists, so the failure is not explained by a missing MDX file alone."
+      ],
+      "contradicting_evidence": [],
+      "confidence": "high",
+      "next_evidence": "Implement one intended route mode in a follow-up change: either add prerendering for static generation or resolve the entry from Astro.params.slug at request time, then rerun the route and npm run quality."
+    },
+    {
+      "rank": 2,
+      "hypothesis": "The specific slug might not be mapped to a content entry at runtime.",
+      "supporting_evidence": [
+        "The rendered route depends on a slug-derived content entry."
+      ],
+      "contradicting_evidence": [
+        "The index route builds links from post.id and the only blog content file is src/content/blog/artifact-boundary.mdx.",
+        "The observed warning/error sequence already explains why the entry variable is undefined before any runtime lookup occurs."
+      ],
+      "confidence": "low",
+      "next_evidence": "If choosing SSR lookup, inspect Astro.params.slug during a request and verify getEntry('blog', slug) returns the artifact-boundary entry."
+    }
+  ],
+  "conclusion": {
+    "most_likely_explanation": "The route fails because src/pages/blog/[...slug].astro expects getStaticPaths() to provide a post prop, but under the current server output mode Astro treats the page as dynamic SSR and ignores getStaticPaths(). That leaves post undefined, and render(undefined) raises RenderUndefinedEntryError.",
+    "remaining_uncertainty": [
+      "The desired downstream behavior is not yet chosen: prerender this blog route or keep it dynamic SSR and fetch the content entry at request time.",
+      "No fix was applied or validated as part of this troubleshooting-only run."
+    ],
+    "recommended_next_action": "Update the blog detail route to match the intended rendering mode, then run npm run quality."
+  }
+}
