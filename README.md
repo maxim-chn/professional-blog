@@ -19,6 +19,40 @@ A personal engineering blog and experimental platform for exploring modern softw
 | CMS                  | None for v0_1                 |
 | Authentication       | None for v0_1                 |
 
+## GCP Deployment
+
+Deployment tools live in `deploy_tools/scripts/gcp/`. They use Docker to build and push an image to Google Artifact Registry, and the Google Cloud CLI (`gcloud`) to deploy it to Cloud Run and retrieve its URL.
+
+Prerequisites: a running Docker engine, an authenticated Google Cloud CLI with access to the target project, Docker authentication for the target Artifact Registry, and an existing Artifact Registry repository. Review `init_env.sh` for the project, region, repository, image name/tag, and Cloud Run service settings. It exports these settings and the derived `GCP_IMAGE_URI`; it does not provision resources or authenticate the tools.
+
+From the `professional-blog` repository root, run the following in order, continuing only after each command succeeds:
+
+```sh
+source deploy_tools/scripts/gcp/init_env.sh
+npm run quality
+bash deploy_tools/scripts/gcp/build_deployable_image.sh
+bash deploy_tools/scripts/gcp/deploy.sh
+bash deploy_tools/scripts/gcp/get_url.sh
+```
+
+Source `init_env.sh` in the same shell before running any of the GCP scripts, including the optional utilities below. Executing it with `bash` instead of sourcing it will not retain its exported variables in the calling shell. Repeat the source command when starting a new shell or changing the settings.
+
+1. `build_deployable_image.sh` builds a `linux/amd64` image from the repository's Dockerfile, pushes it to `GCP_IMAGE_URI`, and prints its OS/architecture. It currently changes directory to `~/personal-blog-workspace/professional-blog/`, so the checkout must be available there.
+2. `deploy.sh` deploys that image to the configured managed Cloud Run service with unauthenticated access enabled.
+3. `get_url.sh` prints the deployed service URL.
+
+To inspect stored images after sourcing the environment:
+
+```sh
+bash deploy_tools/scripts/gcp/list_images.sh
+```
+
+`undeploy.sh` is optional, reserved for future use when the Cloud Run service should be removed. It is not part of the normal deployment sequence and does not delete the Artifact Registry images or repository. After sourcing the environment, run it only when service removal is intended:
+
+```sh
+bash deploy_tools/scripts/gcp/undeploy.sh
+```
+
 ## Architectural Boundary
 
 The blog owns composition, navigation, content, and surrounding presentation. Executable artifacts remain independent units and must not be required to use Astro or another blog-framework component model.

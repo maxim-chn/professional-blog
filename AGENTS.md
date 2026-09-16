@@ -139,6 +139,46 @@ Before considering an implementation task complete, `npm run quality` must pass
 unless the task explicitly sets a different completion condition. Do not weaken,
 bypass, or remove quality checks to make a change pass.
 
+### GCP Deployment Flow and Tools
+
+`deploy_tools/scripts/gcp/` owns the deployment scripts. Docker builds and pushes
+the production image to Google Artifact Registry; the Google Cloud CLI (`gcloud`)
+deploys it to Cloud Run and queries the service URL.
+
+Before running any GCP script, source the environment in the same shell. From
+the repository root, the required deployment order is:
+
+```sh
+source deploy_tools/scripts/gcp/init_env.sh
+npm run quality
+bash deploy_tools/scripts/gcp/build_deployable_image.sh
+bash deploy_tools/scripts/gcp/deploy.sh
+bash deploy_tools/scripts/gcp/get_url.sh
+```
+
+Continue only after each command succeeds. `init_env.sh` must be sourced, not
+executed as a child process: it exports the project, region, Artifact Registry
+repository, image name/tag, derived `GCP_IMAGE_URI`, and Cloud Run service settings.
+Source it again in each new shell or after changing those settings. It does not
+authenticate tools or provision cloud resources.
+
+- `build_deployable_image.sh` builds and pushes a `linux/amd64` image and prints
+  its OS/architecture. It currently uses the fixed checkout location
+  `~/personal-blog-workspace/professional-blog/` as its build context.
+- `deploy.sh` deploys `GCP_IMAGE_URI` to the configured managed Cloud Run service
+  with unauthenticated access enabled.
+- `get_url.sh` prints the Cloud Run service URL; it does not validate site behavior.
+- `list_images.sh` is an optional Artifact Registry inspection utility.
+- `undeploy.sh` is optional for future service removal, outside the normal
+  deployment sequence. It deletes the Cloud Run service, not the stored images
+  or Artifact Registry repository. Use it only when service removal is intended.
+
+The optional scripts also require sourcing `init_env.sh` first. Deployment assumes
+a running Docker engine, authenticated `gcloud` with access to the target project,
+Docker authentication for the target registry, and an existing Artifact Registry
+repository. Keep application validation distinct from deployment and runtime
+verification. See README.md for the operator workflow.
+
 ### Dependency Reasoning
 
 | Direction               | Meaning                     |
