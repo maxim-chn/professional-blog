@@ -1,6 +1,9 @@
 dist/
 node_modules/
+blogpost_drafts/
+blogpost_plans/
 .astro/
 .env
 .env.local
 npm-debug.log*
+.DS_Store
