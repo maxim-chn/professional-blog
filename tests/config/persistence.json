@@ -1,0 +1,15 @@
+{
+  "description": "Independent test settings; tests explicitly override root with an absolute temporary directory.",
+  "root": "../temporary-persistence",
+  "contentMaxCodePoints": 10,
+  "titleMaxCodePoints": 40,
+  "summaryMaxCodePoints": 60,
+  "supportedMediaTypes": ["image/png", "image/jpeg", "image/gif", "image/webp"],
+  "settings": {
+    "root": "Configuration-relative test location; test setup explicitly supplies an isolated root instead.",
+    "contentMaxCodePoints": "Test chunk boundary in Unicode code points.",
+    "titleMaxCodePoints": "Test title boundary in Unicode code points.",
+    "summaryMaxCodePoints": "Test nonblank summary boundary in Unicode code points.",
+    "supportedMediaTypes": "Image formats enabled for this test configuration."
+  }
+}

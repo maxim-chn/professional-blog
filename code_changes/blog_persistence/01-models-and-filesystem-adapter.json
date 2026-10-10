@@ -1,0 +1,236 @@
+{
+  "task": {
+    "name": "01-models-and-filesystem-adapter",
+    "summary": "Implemented Stage 1 typed models, explicit configuration, application operations, and atomic filesystem publication with descending catalogue pagination.",
+    "status": "completed"
+  },
+  "plan_execution": {
+    "plan_source": "code_plans/blog_persistence/01-models-and-filesystem-adapter.md",
+    "steps_total": 8,
+    "steps_completed": 8,
+    "deviations": [
+      {
+        "step": 3,
+        "type": "implementation_detail",
+        "summary": "Shared model field constraints reside in models/fields.ts; each model retains its own checks and there is no independent validation pipeline.",
+        "resolution": "Common canonical UUID, UTC timestamp, and record-shape checks are underlying model artifacts."
+      },
+      {
+        "step": 4,
+        "type": "implementation_detail",
+        "summary": "Selected explicit {{graphic:identifier}} references and signature identification for PNG/JPEG/GIF/WebP.",
+        "resolution": "Documented the producer/renderer convention and configured supported formats; storage never transforms text."
+      },
+      {
+        "step": 8,
+        "type": "implementation_detail",
+        "summary": "Used the native Node TypeScript test runner and added @types/node instead of a separate test framework.",
+        "resolution": "npm run test:persistence executes isolated tests and is included in the unchanged existing quality-check sequence."
+      }
+    ]
+  },
+  "changes": [
+    {
+      "artifact": "src/lib/persistence/models/",
+      "symbols": [
+        "Post",
+        "PostContent",
+        "PostMedia",
+        "PostMetadata",
+        "PostRegistry"
+      ],
+      "responsibility": "Logical records and owned constraints",
+      "change": "One file per model; configured Unicode limits, canonical identifiers/timestamps, explicit graphic tokens, MIME identification and SHA-256 checks.",
+      "upstream_impact": ["Application service", "Filesystem reads"],
+      "downstream_impact": ["Explicit persistence configuration", "Node crypto"]
+    },
+    {
+      "artifact": "src/lib/persistence/config.ts; config/persistence.json; tests/config/persistence.json",
+      "symbols": ["PersistenceConfig", "loadPersistenceConfig"],
+      "responsibility": "Configuration loading",
+      "change": "Required settings with no fallbacks, configuration-relative storage root, explicit absolute override, and independent test settings.",
+      "upstream_impact": ["Adapter/service construction", "Future CLI/runtime"],
+      "downstream_impact": ["Configuration files"]
+    },
+    {
+      "artifact": "src/lib/persistence/service.ts; contract.ts; errors.ts",
+      "symbols": [
+        "PersistenceService",
+        "checkBundle",
+        "samePublication",
+        "PersistenceAdapter",
+        "PersistenceError"
+      ],
+      "responsibility": "Application contract and whole-post consistency",
+      "change": "Complete-bundle checks, application-owned Registry timestamp from an explicit clock, logical duplicate comparison and typed failures.",
+      "upstream_impact": ["Future publication CLI and Astro consumers"],
+      "downstream_impact": ["Model modules", "Adapter contract"]
+    },
+    {
+      "artifact": "src/lib/persistence/filesystem.ts",
+      "symbols": ["FileSystemAdapter"],
+      "responsibility": "Physical storage and publication visibility",
+      "change": "Private staging, exclusive record installation, atomic catalogue replacement, scoped failure cleanup, fresh catalogue-only listing, registered complete reads and store-local identity conflict detection.",
+      "upstream_impact": ["PersistenceService"],
+      "downstream_impact": [
+        "UTF-8 JSON records",
+        "Binary media",
+        "Filesystem operations"
+      ]
+    },
+    {
+      "artifact": "tests/persistence/persistence.test.ts; package.json; package-lock.json",
+      "symbols": ["test:persistence", "quality"],
+      "responsibility": "Contract verification",
+      "change": "46 isolated tests cover configured constraints, exact round trips, retries, conflicts, descending cursors, read restrictions, integrity failures, atomic visibility and cleanup failures; Node types added.",
+      "upstream_impact": ["Repository quality workflow"],
+      "downstream_impact": [
+        "Native Node test runner",
+        "Temporary filesystem roots"
+      ]
+    },
+    {
+      "artifact": "blog_persistence/requirements.md; blog_persistence/models.md; README.md; AGENTS.md",
+      "symbols": [],
+      "responsibility": "Specifications and operating guidance",
+      "change": "Reconciled approved pagination/configuration changes and documented implemented Stage 1 behavior and later-stage boundaries.",
+      "upstream_impact": [
+        "Future implementation stages",
+        "Repository operators"
+      ],
+      "downstream_impact": ["Implemented persistence contract"]
+    },
+    {
+      "artifact": "src/lib/utilities/ and persistence consumers",
+      "symbols": [
+        "isString",
+        "isNonEmpty",
+        "isNonEmptyArray",
+        "isMap",
+        "isBinary",
+        "isNonEmpy",
+        "resolveFormat",
+        "SUPPORTED_IMAGE_MIME_TYPES"
+      ],
+      "responsibility": "Reusable library toolboxes and descriptive constants",
+      "change": "Applied all 13 user review remarks: extracted string, array, record-map, binary, and MIME utilities; replaced repeated predicates; named regular expressions, supported MIME list, configuration keys and model field lists. Preserved whitespace content semantics and existing signature detection.",
+      "upstream_impact": ["Persistence configuration", "Model checks"],
+      "downstream_impact": ["Shared utility modules"]
+    },
+    {
+      "artifact": "src/lib/persistence/service.ts; filesystem.ts; models/; utilities/string_kit.ts",
+      "symbols": [
+        "isNonEmptyString",
+        "checkCatalogue",
+        "checkStoredRecord",
+        "checkStoredMedia",
+        "checkRegistryAssociation"
+      ],
+      "responsibility": "Domain nonempty strings and shared persistence checks",
+      "change": "Added isNonEmptyString for content and summaries, reject blank summaries, exported model field constants and imported them into the service. Moved requested catalogue/envelope/media-shape/association checks into service functions invoked by the filesystem adapter. Updated summary specification and configuration descriptions.",
+      "upstream_impact": ["PersistenceService", "FileSystemAdapter"],
+      "downstream_impact": ["Model field constants", "String utilities"]
+    }
+  ],
+  "validation": {
+    "baseline": [
+      {
+        "check": "npm run format:check before implementation",
+        "result": "fail",
+        "summary": "Seven pre-existing formatting failures: planning skill, both persistence specifications and all four approved plan files. Unrelated working-tree edits were identified and preserved."
+      }
+    ],
+    "targeted": [
+      {
+        "check": "npm run test:persistence",
+        "result": "pass",
+        "summary": "46 tests passed on Node v25.4.0, all using isolated temporary roots."
+      },
+      {
+        "check": "npm run lint",
+        "result": "pass",
+        "summary": "ESLint passed."
+      },
+      {
+        "check": "npm run check",
+        "result": "pass",
+        "summary": "Astro/type checks: zero errors, warnings or hints."
+      },
+      {
+        "check": "npm run build",
+        "result": "pass",
+        "summary": "Production build passed; existing static routes remain unchanged."
+      },
+      {
+        "check": "Prettier on implementation-owned files",
+        "result": "pass",
+        "summary": "Changed source, configuration, specifications, documentation and report conform to repository formatting."
+      },
+      {
+        "check": "Post-review refactor verification",
+        "result": "pass",
+        "summary": "All 46 persistence tests, lint, Astro/type checks (27 files), and production build passed after utility extraction."
+      },
+      {
+        "check": "Further review changes",
+        "result": "pass",
+        "summary": "50 persistence tests passed, including blank summaries, whitespace preservation, malformed stored envelopes, and mismatched Registry associations. Lint, Astro/type checking and production build passed."
+      }
+    ],
+    "quality_gate": {
+      "command": "npm run quality",
+      "result": "fail",
+      "summary": "Stops on five unrelated pre-existing formatting failures: .codex/skills/plancodechanges/SKILL.md and code_plans/blog_persistence/01-models-and-filesystem-adapter.md, 02-publication-cli-and-ingestion.md, 03-astro-runtime-integration.md, 04-browser-e2e-and-quality.md. These files were left unchanged. All remaining gate components passed when run explicitly."
+    },
+    "integration": [
+      {
+        "check": "Isolated filesystem publication/read lifecycle",
+        "result": "pass",
+        "summary": "Verified reopen, independent roots, live reader visibility around atomic commit, partial write cleanup, original/cleanup error retention, and exact stored bytes."
+      },
+      {
+        "check": "Browser/CLI integration and deployment",
+        "result": "not_run",
+        "summary": "Outside Stage 1; reserved for subsequent approved stages."
+      }
+    ]
+  },
+  "files_changed": [
+    "src/lib/persistence/config.ts",
+    "src/lib/persistence/contract.ts",
+    "src/lib/persistence/errors.ts",
+    "src/lib/persistence/filesystem.ts",
+    "src/lib/persistence/models/fields.ts",
+    "src/lib/persistence/models/post-content.ts",
+    "src/lib/persistence/models/post-media.ts",
+    "src/lib/persistence/models/post-metadata.ts",
+    "src/lib/persistence/models/post-registry.ts",
+    "src/lib/persistence/models/post.ts",
+    "src/lib/persistence/service.ts",
+    "tests/persistence/persistence.test.ts",
+    "config/persistence.json",
+    "tests/config/persistence.json",
+    "blog_persistence/requirements.md",
+    "blog_persistence/models.md",
+    "README.md",
+    "AGENTS.md",
+    "package.json",
+    "package-lock.json",
+    "code_changes/blog_persistence/01-models-and-filesystem-adapter.json",
+    "src/lib/utilities/array_kit.ts",
+    "src/lib/utilities/bin_data_kit.ts",
+    "src/lib/utilities/map_kit.ts",
+    "src/lib/utilities/mime_kit.ts",
+    "src/lib/utilities/string_kit.ts"
+  ],
+  "remaining_issues": [
+    "The full quality command remains red solely because of the five documented pre-existing formatting failures; no check was bypassed or weakened.",
+    "Whole-repository git diff --check also reports pre-existing trailing whitespace in blogpost-ideas.txt; that unrelated file was not changed.",
+    "Media checks identify formats by signatures rather than decoding complete images. Unsupported formats fail explicitly.",
+    "Publication assumes one writer and well-separated Registry timestamps. Crash recovery and power-loss durability remain outside scope."
+  ],
+  "handoff": {
+    "implementation_complete": true,
+    "recommended_next_action": "Review Stage 1 implementation and resolve pre-existing formatting failures before proceeding to Stage 2 publication CLI and ingestion. No routes, baseline store, commits or deployments were created."
+  }
+}
