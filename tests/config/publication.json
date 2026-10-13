@@ -1,0 +1,15 @@
+{
+  "description": "Independent publication test settings. Paths resolve relative to this file; test setup explicitly overrides writable locations with temporary directories.",
+  "persistenceConfig": "./persistence.json",
+  "visitorOrigin": "http://localhost:4322",
+  "legacySourceRoot": "../fixtures/publication/legacy",
+  "legacyPublicRoot": "../fixtures/publication/public",
+  "preparedRoot": "../temporary-publication",
+  "settings": {
+    "persistenceConfig": "Independent test persistence configuration. Test setup supplies an isolated storage root.",
+    "visitorOrigin": "Origin used for test visitor URLs. Runtime tests explicitly supply their actual server origin.",
+    "legacySourceRoot": "Directory containing legacy source fixtures for ingestion tests.",
+    "legacyPublicRoot": "Directory containing public asset fixtures for ingestion tests.",
+    "preparedRoot": "Preparation output location. Tests explicitly override it with an isolated temporary directory."
+  }
+}

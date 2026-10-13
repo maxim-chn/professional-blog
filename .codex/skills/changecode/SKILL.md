@@ -31,7 +31,29 @@ Implement what was planned.
 
 Do not silently redesign the task while implementing it. Preserve the intent, dependency order, constraints, architectural boundaries, and validation requirements established by the supplied plan.
 
-If repository evidence shows that the plan is materially incorrect, incomplete, unsafe, or no longer applicable, stop instead of inventing a replacement plan. Write a blocked implementation report when `OUTPUT_DIR` is available.
+If repository evidence shows that the plan is materially incorrect, incomplete, unsafe, or no longer applicable, stop instead of inventing a replacement plan. Prepare a blocked implementation report when `OUTPUT_DIR` is available and obtain its file approval before writing it.
+
+## Mandatory Per-File Review Stopgate
+
+Before creating or modifying any file, present its current state and the exact expected change for user review, then stop and wait for explicit approval. Approval of the overall plan or a general instruction to implement it does not replace this per-file review.
+
+Present changes to **one file only** in each approval submission. For an existing file, show a complete proposed diff or clearly paired before/after blocks covering every intended edit, with enough unchanged context to review them. For a new file, identify the before state as "file does not exist" and show its complete proposed contents. Include the file path, the purpose of the change, and why this file is next in dependency order. Do not write the proposed file, a temporary draft, or a patch file before approval; present the proposal in chat.
+
+Use this sequence for each file:
+
+1. Inspect the current file and its dependencies without changing them.
+2. Present the before state and expected after state for that file alone.
+3. Wait for the user to approve or provide remarks. Silence, elapsed time, and remarks alone are not approval.
+4. If the user provides remarks, incorporate them and re-present the before state and updated expected after state for the same file. Wait for approval again. Repeat until approved.
+5. Recheck that the file still matches the reviewed before state. If it has changed, reconcile the proposal and obtain fresh approval rather than overwriting intervening work.
+6. Apply only the approved changes to that file. Inspect the resulting diff and perform applicable validation.
+7. Only then submit the next file for review. Any further edit to an already approved file requires another before/after review and approval.
+
+Order submissions from underlying artifacts to their dependents: shared utilities, models, and foundational configuration before services, adapters, and higher-level consumers. Use actual dependencies and the approved plan, not directory names alone. A dependent file's review must build on the underlying changes already approved and applied. For independent files, choose an order but still review them separately. If a dependency cycle prevents this order, explain it and agree on a sequence before writing; do not bypass the one-file rule.
+
+The stopgate covers source, configuration, tests, dependency manifests and lockfiles, documentation, and implementation reports, including blocked reports. Commands that create or modify files, such as formatters, package managers, generators, or validation tools, must not bypass it: identify and obtain the required approvals for their file changes before running them. If expected changes cannot yet be made reviewable, stop and explain the limitation instead of running the mutating command speculatively. Read-only inspection and checks may continue while approval is pending.
+
+Here, writing means applying changes to disk; this gate is not limited to Git commits. File-change approval does not itself authorize a Git commit, push, or deployment.
 
 ## Repository Requirements
 
@@ -97,10 +119,10 @@ Execute the `CHANGE_PLAN` steps in dependency-aware order, normally moving from 
 For every step:
 
 1. inspect directly relevant code;
-2. make the minimum required change;
-3. preserve existing interfaces unless the plan explicitly changes them;
-4. avoid nearby cleanup unrelated to the plan;
-5. run targeted validation when useful before continuing upward.
+2. select the next underlying file and follow the Mandatory Per-File Review Stopgate;
+3. after explicit approval, apply only that file's approved change;
+4. preserve existing interfaces unless the plan explicitly changes them and avoid unrelated cleanup;
+5. run targeted validation when useful before continuing upward, subject to the stopgate for any file writes.
 
 Prefer changing the artifact that owns the behavior rather than compensating in a higher-level consumer.
 
@@ -113,6 +135,8 @@ Stop for material plan deviations that alter what should be modified, the depend
 ### 6. Validate
 
 Run the narrowest useful validations first, such as targeted tests, affected routes, reproduction commands, type checks, or local build commands.
+
+Review the file-writing effects of validation commands before execution. A failing check does not authorize an automatic fix: present each proposed correction through the per-file stopgate before applying it.
 
 For bug fixes, rerun the original reproduction after implementation whenever practical. The exact originally observed failure should no longer occur.
 
@@ -130,7 +154,7 @@ Before completion, inspect the resulting changes. Verify that every changed arti
 
 ### 8. Write Report
 
-Write a concise valid JSON implementation report to:
+Prepare a concise valid JSON implementation report, submit it as its own file through the per-file stopgate, and write it only after explicit approval to:
 
 ```text
 <OUTPUT_DIR>/<task_name>.json
@@ -211,4 +235,4 @@ For blocked reports, set `task.status` to `blocked`, `handoff.implementation_com
 
 ## Completion Criteria
 
-The skill is complete only when repository instructions have been read and followed, the plan has been validated against the current codebase, planned changes have been implemented in dependency-aware order without material unapproved deviations, relevant reproduction and targeted validation pass, `npm run quality` passes or an unrelated pre-existing failure is documented, additional required validation has run, the final diff has been reviewed for scope, no temporary artifacts remain, and the JSON implementation report exists at `<OUTPUT_DIR>/<task_name>.json`.
+The skill is complete only when repository instructions have been read and followed, the plan has been validated against the current codebase, each file's before/after change has been separately reviewed and explicitly approved before writing, user remarks have been incorporated and re-presented for approval, planned changes have been implemented in dependency-aware order without material unapproved deviations, relevant reproduction and targeted validation pass, `npm run quality` passes or an unrelated pre-existing failure is documented, additional required validation has run, the final diff has been reviewed for scope, no temporary artifacts remain, and the approved JSON implementation report exists at `<OUTPUT_DIR>/<task_name>.json`.

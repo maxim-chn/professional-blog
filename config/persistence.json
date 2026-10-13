@@ -1,0 +1,15 @@
+{
+  "description": "Application persistence settings. Paths resolve relative to this file; all settings are required.",
+  "root": "../local_database",
+  "contentMaxCodePoints": 1024,
+  "titleMaxCodePoints": 256,
+  "summaryMaxCodePoints": 1024,
+  "supportedMediaTypes": ["image/png", "image/jpeg", "image/gif", "image/webp"],
+  "settings": {
+    "root": "Filesystem store; never resolved relative to the process working directory.",
+    "contentMaxCodePoints": "Maximum Unicode code points in each nonempty Content payload.",
+    "titleMaxCodePoints": "Maximum Unicode code points in a nonblank Metadata title.",
+    "summaryMaxCodePoints": "Maximum Unicode code points in a nonblank Metadata summary.",
+    "supportedMediaTypes": "Allowed binary signature formats: PNG, JPEG, GIF, WebP. No fallback format."
+  }
+}

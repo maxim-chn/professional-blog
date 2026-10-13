@@ -252,3 +252,17 @@ transcription.
 Avoid large code excerpts unless exact syntax is the point. A useful explanation
 lets the reader understand artifact responsibilities and interactions without
 reconstructing the architecture from individual source lines.
+
+## Implemented Persistence Boundary (Stage 1)
+
+The explicit persistence task introduces `src/lib/persistence/`; the public Astro routes still use the static collection until the runtime integration stage. Do not wire routes, run ingestion, create baseline posts, or deploy as part of Stage 1.
+
+- Models live one per file under `models/`. Record checks belong to models, relationship checks to `PersistenceService`, and physical integrity checks to `FileSystemAdapter`. Do not introduce an independent validation module.
+- Configuration lives in `config/persistence.json`; tests independently load `tests/config/persistence.json`. All operational settings must be explicit, with no hardcoded fallbacks. Paths resolve relative to the config file. Tests explicitly override the root with an absolute temporary directory.
+- The caller generates UUID v4 identifiers and Metadata dates. The application service receives an explicit clock and assigns Registry dates. Do not invent collision handling or synthetic timestamp increments; publication is sequential and well separated.
+- `local_database` is the configured application root and must remain trackable. Stage 2 will populate it. Isolated Stage 1 tests never modify it.
+- The catalogue contains Registry/Metadata only. Listing reads no Post relationship arrays, text, or media and performs no discovery scan. It sorts solely by Registry timestamp descending and paginates strictly older than its UTC-millisecond cursor. Restart without a cursor to discover new posts.
+- Post retrieval resolves Registry membership before records. Unknown membership and corrupt registered data have distinct typed errors. Future runtime post/media routes must retain that boundary.
+- Graphic references use the explicit `{{graphic:identifier}}` convention described in README. Check the reconstructed whole body. Never normalize text or infer references from UUID-like prose.
+- Stage complete records privately, install without overwriting, and atomically replace the catalogue last. One writer per root; live readers only observe committed posts. Identical retries preserve Registry timestamps and bytes. No public update/delete/resume operation exists.
+- Run `npm run test:persistence` and the required `npm run quality`. Preserve the tests for exact bytes/text, configured limits, relationships, duplicate/conflict behavior, descending cursors, fresh reads, root isolation, and pre-commit I/O/cleanup failures. Node 22.18+ supports the native TypeScript test command.

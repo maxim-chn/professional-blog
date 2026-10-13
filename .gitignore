@@ -2,6 +2,7 @@ dist/
 node_modules/
 blogpost_drafts/
 blogpost_plans/
+blogpost_manifests/
 .astro/
 .env
 .env.local

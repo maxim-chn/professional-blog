@@ -16,7 +16,7 @@ The skill produces a plan only. It must not implement the proposed changes, incl
 ## Inputs
 
 | Argument       | Required | Meaning                                                                                                                                                                                                                                  |
-| -------------- | -------: | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| -------------- | -------  | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `TASK_CONTEXT` |      Yes | Authoritative implementation task to plan. It may include a feature request, bug description, acceptance criteria, constraints, diagnostic snapshot, `troubleshoot` output, product requirements, explicit boundaries, or a combination. |
 | `OUTPUT_DIR`   |      Yes | Directory where the approved plan document must be written. Final path is `<OUTPUT_DIR>/<task_name>.md`.                                                                                                                                 |
 
