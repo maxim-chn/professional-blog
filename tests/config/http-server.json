@@ -1,0 +1,7 @@
+{
+  "description": "Independent settings for local HTTP integration tests against the built Astro server.",
+  "host": "127.0.0.1",
+  "port": 0,
+  "startupTimeoutMs": 10000,
+  "shutdownTimeoutMs": 5000
+}

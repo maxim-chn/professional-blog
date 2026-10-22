@@ -1,17 +1,18 @@
 ---
-import type { CollectionEntry } from 'astro:content';
-import ArtifactSandbox from '@components/ArtifactSandbox.astro';
+import type { PostMetadata } from '../lib/persistence/models/post-metadata.ts';
 import BaseLayout from '@layouts/BaseLayout.astro';
 
 type Props = {
-  post: CollectionEntry<'blog'>;
+  metadata: PostMetadata;
+  body: string;
 };
 
-const { post } = Astro.props;
-const { title, description, publishDate, artifact } = post.data;
+const { metadata, body } = Astro.props;
+const { title, summary, created_at } = metadata;
+const publishDate = new Date(created_at);
 ---
 
-<BaseLayout title={`${title} | Professional Blog`} description={description}>
+<BaseLayout title={`${title} | Professional Blog`} description={summary}>
   <article class="post">
     <header class="post__header">
       <p class="post__date">
@@ -26,22 +27,10 @@ const { title, description, publishDate, artifact } = post.data;
         >
       </p>
       <h1>{title}</h1>
-      <p>{description}</p>
+      <p>{summary}</p>
     </header>
 
-    <div class="post__body">
-      <slot />
-    </div>
-
-    {
-      artifact && (
-        <ArtifactSandbox
-          src={artifact.src}
-          title={artifact.title}
-          height={artifact.height}
-        />
-      )
-    }
+    <div class="post__body" set:html={body} />
   </article>
 </BaseLayout>
 

@@ -1,0 +1,9 @@
+{
+  "description": "Independent Astro runtime test settings. Configuration references resolve relative to this file. Tests explicitly supply isolated storage and the actual server origin.",
+  "publicationConfig": "./publication.json",
+  "cataloguePageSize": 2,
+  "settings": {
+    "publicationConfig": "Independent publication test configuration supplying the visitor origin and persistence configuration reference.",
+    "cataloguePageSize": "Maximum blog posts displayed on the test homepage and each catalogue page. A small value exercises pagination with few fixtures."
+  }
+}

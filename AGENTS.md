@@ -253,16 +253,25 @@ Avoid large code excerpts unless exact syntax is the point. A useful explanation
 lets the reader understand artifact responsibilities and interactions without
 reconstructing the architecture from individual source lines.
 
-## Implemented Persistence Boundary (Stage 1)
+## Implemented Persistence and Runtime Boundaries
 
-The explicit persistence task introduces `src/lib/persistence/`; the public Astro routes still use the static collection until the runtime integration stage. Do not wire routes, run ingestion, create baseline posts, or deploy as part of Stage 1.
+`src/lib/persistence/` owns stored blog posts. Astro retrieves them at request time. Playground entries remain a separate static collection for sandboxed applications. Publishing is explicit; builds and server startup must not ingest or republish posts.
 
 - Models live one per file under `models/`. Record checks belong to models, relationship checks to `PersistenceService`, and physical integrity checks to `FileSystemAdapter`. Do not introduce an independent validation module.
 - Configuration lives in `config/persistence.json`; tests independently load `tests/config/persistence.json`. All operational settings must be explicit, with no hardcoded fallbacks. Paths resolve relative to the config file. Tests explicitly override the root with an absolute temporary directory.
 - The caller generates UUID v4 identifiers and Metadata dates. The application service receives an explicit clock and assigns Registry dates. Do not invent collision handling or synthetic timestamp increments; publication is sequential and well separated.
-- `local_database` is the configured application root and must remain trackable. Stage 2 will populate it. Isolated Stage 1 tests never modify it.
+- `local_database` is the configured application root and contains the tracked two-post baseline packaged in the deployable image. Persistence and runtime tests use isolated temporary roots and never modify this baseline.
 - The catalogue contains Registry/Metadata only. Listing reads no Post relationship arrays, text, or media and performs no discovery scan. It sorts solely by Registry timestamp descending and paginates strictly older than its UTC-millisecond cursor. Restart without a cursor to discover new posts.
-- Post retrieval resolves Registry membership before records. Unknown membership and corrupt registered data have distinct typed errors. Future runtime post/media routes must retain that boundary.
+- Post retrieval resolves Registry membership before records. Runtime post/media routes return 400 for malformed identifiers, 404 for unknown membership, and 500 for corrupt stored data or configuration failures. Never expose internal paths or error details.
 - Graphic references use the explicit `{{graphic:identifier}}` convention described in README. Check the reconstructed whole body. Never normalize text or infer references from UUID-like prose.
 - Stage complete records privately, install without overwriting, and atomically replace the catalogue last. One writer per root; live readers only observe committed posts. Identical retries preserve Registry timestamps and bytes. No public update/delete/resume operation exists.
-- Run `npm run test:persistence` and the required `npm run quality`. Preserve the tests for exact bytes/text, configured limits, relationships, duplicate/conflict behavior, descending cursors, fresh reads, root isolation, and pre-commit I/O/cleanup failures. Node 22.18+ supports the native TypeScript test command.
+- Run `npm run test:persistence`, `npm run build`, and `npm run test:runtime`, plus the required `npm run quality`. Runtime HTTP tests require a current build and permission to listen on localhost. Preserve coverage for exact bytes/text, configured limits, relationships, duplicate/conflict behavior, descending cursors, fresh reads, root isolation, and failure handling. Node 22.18+ supports the native TypeScript test command.
+
+### Astro runtime conventions
+
+- Blog posts use `/blog-post/<post-id>/`; the catalogue uses `/blog-post-catalogue/`. Do not restore static blog routes or discover migration sources through an Astro blog collection.
+- The homepage always loads the first catalogue page without a cursor. Catalogue URLs carry the current cursor in `next_page` and earlier cursors in repeated `prev_page` parameters. Preserve newest-first ordering and probe for another item before displaying an Older link.
+- `ASTRO_RUNTIME_CONFIG` selects an absolute runtime configuration path. `PERSISTENCE_ROOT` and `VISITOR_ORIGIN` support explicit overrides. Application and test configuration remain independent.
+- Playground pages use `/playground/<demo-app-name>/`. Their descriptions and applications remain outside persistence. Preserve `ArtifactSandbox.astro` and the independently packaged application assets.
+- Reconstruct stored HTML in `content_ids` order before resolving graphic references. Modify only the rendered representation.
+- The runtime image includes configuration and `local_database`; preparation manifests remain excluded. Container verification must work without mounting the host repository.

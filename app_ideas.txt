@@ -1,0 +1,2 @@
+1. Task tracker with option to visually summarizes work on tasks, in comparison to other tasks.
+2. Recipies manager.

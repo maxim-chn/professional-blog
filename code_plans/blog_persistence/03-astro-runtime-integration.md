@@ -1,246 +1,346 @@
-# Stage 3: Astro runtime integration
+# Stage 3: Blog posts, catalogue navigation, and Playground
 
 ## Task
 
-Connect the local Astro application to the persistence service and populated store delivered by Stages 1 and 2.
+Connect Astro to the persistence service and the two blog posts already published in `local_database`.
 
-The homepage must show committed posts, newest Registry timestamp first. Each generated visitor link must resolve to a complete post with its stored images.
+Establish these public routes:
 
-A post published through the CLI must become visible on homepage refresh without rebuilding or restarting Astro.
+| Route | Responsibility |
+| --- | --- |
+| `/` | Homepage containing the first catalogue page and links to Playground |
+| `/blog-post/<post-id>` | A complete persistence-backed blog post |
+| `/blog-post-catalogue/` | First catalogue page |
+| `/blog-post-catalogue/?next_page=<timestamp>` | A subsequent catalogue page |
+| `/playground/<demo-app-name>` | A static page containing an interactive, sandboxed demo application |
+| `/media/<post-id>/<media-id>` | An image belonging to a registered blog post |
 
-This stage excludes production database integration, deployment, publication UI, and changes to the persistence models. Automated browser E2E and tracked-root restoration belong to Stage 4.
+Use **blog posts** for persistence-backed articles. Remove static blog-post serving.
 
-All paths below are relative to the repository root. New file locations are proposed.
+Use **Playground** for pages whose primary purpose is interaction with a demo application. Their descriptions, graphics, sandbox presentation, and application code remain static and packaged with the site, outside blog persistence.
+
+A newly published blog post must appear on homepage or first-catalogue-page refresh without rebuilding or restarting Astro.
+
+Include the existing published baseline in the deployable image for E2E against pre-existing posts.
+
+This stage excludes remote deployment, production database integration, publication UI, persistence-model changes, and legacy URL redirects. Browser E2E and shared-root restoration remain Stage 4 responsibilities.
+
+All paths below are relative to the repository root. New locations are proposed.
 
 ## Affected Area
 
-| Artifact | Current responsibility | Planned responsibility |
-| --- | --- | --- |
-| `src/pages/index.astro` | Lists static collection entries | Lists committed posts through `listPosts` |
-| `src/pages/blog/[...slug].astro` | Prerenders collection entries | Replaced by request-time UUID route |
-| `src/pages/blog/[postId].astro` | New | Retrieves and renders a registered post |
-| `src/pages/media/[postId]/[mediaId].ts` | New | Serves media belonging to a registered post |
-| `src/layouts/PostLayout.astro` | Accepts an Astro collection entry | Accepts persistence-backed presentation data |
-| `src/lib/server/persistence.ts` | New | Server-only composition of configuration, adapter, and application service |
-| `src/lib/server/post-rendering.ts` | New | Complete-body reconstruction and graphic-reference resolution |
-| `src/lib/publication/visitor-url.ts` | Stage 2 visitor URL construction | Shared by CLI and homepage |
-| `config/astro-runtime.json` | New | Explicit runtime settings and configuration references |
-| `tests/config/astro-runtime.json` | New | Independent runtime test settings |
-| `tests/runtime/` | New | Rendering and HTTP integration tests |
-| `astro.config.mjs` | Server output with Node adapter | Retains existing runtime foundation |
-| `src/content.config.ts`, `src/content/blog/` | Static collection schema and authored sources | Retained source tooling, no longer the public catalogue |
-| `README.md`, `AGENTS.md`, `package.json` | Operating guidance and checks | Runtime documentation and focused test integration |
+| Artifact | Planned responsibility |
+| --- | --- |
+| `src/lib/publication/visitor-url.ts` | Change the blog-post route pattern to `/blog-post/<post-id>` |
+| `src/lib/server/persistence.ts` | Compose runtime configuration, adapter, and application service |
+| `src/lib/server/post-rendering.ts` | Reconstruct stored bodies and resolve graphic references |
+| `src/lib/server/catalogue.ts` | Load one catalogue page, validate cursor navigation, and construct navigation links |
+| `config/astro-runtime.json` | Explicit runtime settings and configuration references |
+| `tests/config/astro-runtime.json` | Independent runtime test settings |
+| `src/content.config.ts` | Define Playground content separately from blog persistence |
+| `src/content/playground/` | Static Playground descriptions and demo metadata |
+| `src/content/blog/` | Retained migration sources, excluded from public static discovery |
+| `src/layouts/PostLayout.astro` | Present persistence-backed blog posts |
+| `src/layouts/PlaygroundLayout.astro` | Present static descriptions and sandboxed demo applications |
+| `src/components/ArtifactSandbox.astro` | Preserve the existing sandbox integration |
+| `src/pages/index.astro` | Load the first catalogue page and expose Playground links |
+| `src/pages/blog-post-catalogue/index.astro` | Render one catalogue page and its navigation |
+| `src/pages/blog-post/[postId].astro` | Retrieve a blog post at request time |
+| `src/pages/playground/[demoAppName].astro` | Prerender Playground pages |
+| `src/pages/media/[postId]/[mediaId].ts` | Serve stored image bytes |
+| `src/pages/blog/[...slug].astro` | Remove the old static blog route |
+| `src/layouts/BaseLayout.astro` and navigation components | Expose the agreed Blog and Playground destinations |
+| `public/artifacts/` | Retain independently served demo applications and assets |
+| `Dockerfile`, `.dockerignore` | Package the baseline and runtime configuration; exclude preparation manifests |
+| `tests/runtime/` | Rendering, catalogue-navigation, and HTTP tests |
+| `README.md`, `AGENTS.md`, `package.json` | Operating guidance and focused quality checks |
+
+Validation belongs to the responsible modules. Do not introduce an independent validation module.
 
 ## Dependency View
 
-Server composition depends on Stage 1’s application service and explicit configuration.
+Runtime composition depends on the existing persistence service and explicit configuration.
 
-Post rendering depends on the complete records returned by `getPost` and the graphic-reference convention used by Stage 2 preparation.
+Catalogue navigation depends on `listPosts` and the agreed timestamp-cursor contract. Post rendering depends on `getPost` and the existing graphic-reference convention.
 
-The layout depends on presentation data rather than Astro collection types.
+Page routes consume these responsibilities. The homepage and catalogue page share listing and navigation behavior.
 
-Post and media routes consume these responsibilities. The homepage consumes `listPosts` and the existing visitor URL builder.
+Playground has its own static collection and layout. It depends on the existing sandbox component, not on persistence.
 
-Stage 2’s populated baseline must exist before public discovery switches. After the switch, the registry is the sole authority for published-post membership.
+Image packaging follows runtime integration so the final image contains the files that the runtime actually needs.
 
 ## Change Plan
 
-### 1. Configure the server-side persistence service
+### 1. Establish configuration and URL conventions
 
-Introduce server-only composition that loads configuration and constructs the filesystem-backed application service.
+Update the shared visitor URL builder to use `/blog-post/<post-id>`. Keep route patterns in named constants and reuse the builder in CLI output and page links.
 
-Runtime configuration references the existing persistence and publication configurations rather than duplicating storage-root or visitor-origin values.
+Define catalogue and Playground URL construction in their owning modules. Use URL APIs to encode query values correctly.
 
-Put all configurable runtime values in configuration files, including the listing batch size. Application and test settings remain independent, with no hardcoded fallback defaults.
+Introduce explicit runtime configuration that references the existing persistence and publication configuration files.
 
-Validate configuration within the module responsible for loading it. Reject missing or invalid required values.
+Define the catalogue page size in configuration. The homepage and catalogue route use the same page size so forward and backward navigation retain consistent boundaries.
 
-CLI and Astro must select the same storage root for local publication verification. Configuration paths resolve according to the established configuration-file rules.
+Application and test settings remain independently configurable across all settings. No hardcoded configuration fallbacks.
+
+Resolve configuration references relative to their containing files. Validate required settings in their owning modules.
+
+**Validation:** URL generation, configuration-relative paths, independent test settings, and missing or invalid settings.
+
+### 2. Separate Playground content from blog posts
+
+Introduce a Playground collection and move the existing executable demonstration’s description and metadata into it.
+
+Use `counter-demo` as the existing demonstration’s application name, producing `/playground/counter-demo`.
+
+The Playground entry describes the page and references the independently packaged demo application. Keep application code and assets under their existing static location.
+
+Preserve the description, configured frame height, sandbox permissions, and supporting presentation.
+
+Stop discovering blog posts through the Astro static collection. Retain the two migrated ordinary source documents as migration sources without generating public routes from them.
+
+Required Playground metadata must be explicit; do not introduce hidden defaults.
+
+**Validation:** The demonstration belongs to the Playground collection; ordinary blog sources do not appear in static public discovery.
+
+### 3. Compose the server-side persistence service
+
+Create server-only composition that loads configuration and constructs the filesystem-backed application service.
+
+CLI and Astro must use the same selected storage root for publication verification.
 
 Service instances may be reused, but operations must read current committed state. Do not retain a startup-only catalogue snapshot.
 
 Keep filesystem access and storage configuration out of browser bundles.
 
-### 2. Implement stored-body rendering
+**Validation:** Shared storage selection, fresh reads, and server-only dependencies.
 
-Use `getPost` results to reconstruct the complete body by concatenating Content records in their returned order.
+### 4. Implement catalogue pagination and URL state
 
-Preserve text exactly during reconstruction. Resolve graphic references only after reconstruction because chunk boundaries may occur inside tags or attributes.
+Render one configured batch per request. Do not fetch the entire catalogue.
 
-For each explicit graphic reference:
+The homepage always calls `listPosts` without a cursor. Query parameters on the homepage do not change its catalogue page.
 
-- Resolve its symbolic identifier through the Post’s media map.
+The catalogue route uses these parameters:
+
+| Parameter | Meaning |
+| --- | --- |
+| `next_page` | The cursor passed to `listPosts` for the requested page |
+| `prev_page` | A repeatable history of earlier page-start cursors, in traversal order |
+
+Examples:
+
+| URL | Requested page |
+| --- | --- |
+| `/blog-post-catalogue/` | First page, no cursor |
+| `/blog-post-catalogue/?next_page=A` | Second page, using cursor A |
+| `/blog-post-catalogue/?next_page=B&prev_page=A` | Third page, using cursor B |
+| `/blog-post-catalogue/?next_page=C&prev_page=A&prev_page=B` | Fourth page, using cursor C |
+
+Here A, B, and C represent actual Registry timestamps encountered while navigating toward older posts.
+
+#### Older posts
+
+Use the current result’s `next_cursor` as the destination’s `next_page`.
+
+When leaving a page that already has a `next_page`, append that current cursor to the destination’s `prev_page` history.
+
+The first page is represented by the absence of a cursor, so it adds no history entry.
+
+Because the persistence contract returns a cursor even for the last populated page, probe with `listPosts(1, next_cursor)` before displaying **Older posts**.
+
+This probe reads catalogue and metadata only. Do not change the persistence API or load post bodies.
+
+#### Newer posts
+
+When history is present, promote its last `prev_page` value to the destination’s `next_page` and remove that value from the history.
+
+When the current page has a cursor but no history, link to `/blog-post-catalogue/`.
+
+The first page has no **Newer posts** link.
+
+#### Navigation behavior
+
+Use ordinary server-rendered links. The URL preserves navigation state across refreshes, bookmarks, shared links, and browser Back/Forward. No browser-local state store is required.
+
+The homepage’s **Older posts** link enters the catalogue route using its returned cursor. Provide a link to the first catalogue page independently of whether older posts exist.
+
+Validate cursor values using the established ISO UTC timestamp format with milliseconds. Reject malformed values, multiple `next_page` values, history without a current cursor, and history that is not strictly descending toward the current cursor.
+
+Treat history as navigation input, not evidence that the visitor previously visited those pages.
+
+An empty result for a valid later-page URL is a normal empty page. Preserve navigation toward newer posts.
+
+Every request to the first page reads the latest catalogue. Pagination is not a frozen snapshot; returning to the first page can reveal newly published posts.
+
+**Validation:** Forward navigation, repeated backward navigation, URL reloads, direct links, invalid input, final-page probing, and empty-page recovery.
+
+### 5. Implement stored-body rendering
+
+Reconstruct each body in the Post’s authoritative `content_ids` order, preserving text exactly.
+
+Resolve graphic references only after reconstruction because chunk boundaries may split tags or references.
+
+For each reference:
+
+- Resolve the symbolic identifier through the Post’s media map.
 - Associate it with the owning Post and Media UUID.
-- Generate an application media URL.
-- Preserve captions, alternative text, styles, and other presentation attributes.
+- Construct an application media URL.
+- Preserve surrounding markup, captions, alternative text, and styles.
 
-Perform substitutions in the rendered representation only. Do not rewrite stored Content or Media records.
+Modify only the rendered representation. Do not rewrite stored Content or Media records.
 
-Use the convention established by Stages 1 and 2. Missing or inconsistent mappings are integrity failures, not an invitation to fall back to legacy image paths.
+Missing or inconsistent mappings are integrity failures. Do not fall back to legacy image paths.
 
-Render the publication-ready HTML produced during preparation. Do not execute stored MDX or require client-side JavaScript to supply essential post content.
+Render publication-ready HTML. Do not execute stored MDX or add executable-demo presentation to blog posts.
 
-Preserve the prepared executable-artifact framing and sandbox behavior without adding another copy of the artifact to the page.
+**Validation:** Exact reconstruction, references spanning chunks, complete image mappings, and unchanged stored records.
 
-### 3. Adapt the post layout
+### 6. Establish the two presentation layouts
 
-Replace the `CollectionEntry<'blog'>` dependency in `PostLayout.astro` with explicit persistence-backed presentation inputs.
-
-Map:
+Adapt `PostLayout.astro` to accept persistence-backed presentation inputs.
 
 | Persistence value | Presentation |
 | --- | --- |
-| Metadata `title` | Page title and post heading |
+| Metadata `title` | Page title and heading |
 | Metadata `summary` | Page description and displayed summary |
-| Metadata `created_at` | Displayed post date |
-| Reconstructed, resolved body | Post body content |
+| Metadata `created_at` | Displayed publication date |
+| Reconstructed body | Post content |
 
-Preserve the existing page structure and styling.
+Preserve existing blog-post structure and styling. Registry timestamps determine catalogue order, not the displayed publication date.
 
-Registry timestamps determine listing order only. Do not substitute them for the displayed Metadata date.
+Move the static description-and-demo presentation responsibility into `PlaygroundLayout.astro`. Retain `ArtifactSandbox.astro` as its integration boundary.
 
-Remove the layout’s dependency on legacy `post.data.artifact` for migrated posts. Stage 2’s prepared presentation carries the demonstration forward through the established artifact boundary.
+Playground pages must not depend on Post, Content, Media, Metadata, or Registry records.
 
-### 4. Add the media endpoint
+**Validation:** Blog-post presentation and independent Playground description, framing, and sandbox attributes.
 
-Introduce `/media/<post_id>/<media_id>` as the application endpoint for stored image bytes.
+### 7. Introduce routes and navigation
 
-The endpoint must:
+Implement request-time routes for blog posts, the catalogue, and stored media.
 
-1. Check request identifiers.
-2. Resolve the Post through committed Registry membership.
-3. Confirm the requested Media belongs to that Post and is referenced by its media map.
-4. Return exact stored bytes with the recorded MIME type.
+For blog-post and media requests:
 
-Initially reuse `getPost` rather than introducing another public persistence operation.
+- Return HTTP 400 for malformed identifiers.
+- Return HTTP 404 for unknown posts or media not belonging to the requested post.
+- Return HTTP 500 for corrupt or missing referenced records and storage I/O failures.
+- Complete retrieval and validation before returning success.
+- Keep internal filesystem paths and error details out of visitor responses.
 
-Return:
+The media endpoint initially reuses `getPost`, verifies ownership and membership, and returns exact bytes with the recorded MIME type.
 
-- HTTP 400 for malformed identifiers.
-- HTTP 404 for unknown/unregistered posts or media not belonging to the requested post.
-- HTTP 500 for missing or corrupt records that a registered post references, or storage I/O failures.
+Prerender Playground pages through their separate static collection.
 
-Complete lookup and integrity checks before returning a successful response. Do not expose filesystem paths, partial bytes, or internal error details to visitors.
+Remove the old `/blog/` route. Do not create redirects or continue serving migrated static blog posts.
 
-### 5. Replace prerendered post lookup
+Update homepage and shared navigation:
 
-Replace `src/pages/blog/[...slug].astro` with `src/pages/blog/[postId].astro`.
+- Link blog-post cards to `/blog-post/<post-id>`.
+- Link the catalogue destination to `/blog-post-catalogue/`.
+- Identify interactive content as **Playground**.
+- Link the existing demo to `/playground/counter-demo`.
 
-Remove public-route use of:
+Maintain catalogue order exactly as returned by the service: Registry timestamp descending, without secondary ordering or Metadata-date sorting.
 
-- `prerender = true`
-- `getStaticPaths`
-- Static collection props
-- `astro:content` rendering
+An empty catalogue receives a normal empty state. A failed storage read receives an explicit error response.
 
-Resolve the requested Post UUID through `getPost` at request time, prepare its rendered body, and supply the layout with Metadata and content.
+Avoid caching that hides freshly committed posts. Do not ingest sources during startup or requests.
 
-Apply the same explicit HTTP distinction between malformed identifiers, unknown posts, and storage/integrity failures.
+**Validation:** All new destinations, removal of old static routes, HTTP errors, and fresh publication visibility.
 
-Complete retrieval and preparation before producing a successful post response. Never render a partial post with HTTP 200.
+### 8. Package the published baseline
 
-Retain the existing server output and Node adapter configuration unless implementation reveals a necessary adjustment.
+Include the existing `local_database` catalogue, records, and binary media in the final deployable image.
 
-### 6. Switch homepage discovery
+Include required runtime configuration with working path references, plus compiled Playground pages and their static application assets.
 
-Replace static collection discovery with `listPosts`.
+Do not regenerate manifests, assign new identities, or publish posts during image build or startup.
 
-Use the configured batch size and follow older-than cursors until an empty page, preserving the existing homepage behavior of displaying all published posts.
+Keep `blogpost_manifests/` ignored by Git and excluded from the Docker build context. Runtime pages must work without that directory.
 
-Maintain the order returned by the service:
+Preserve baseline identities, Registry timestamps, content, and media bytes. Keep baseline data eligible for version control.
 
-- Registry timestamp descending.
-- Newest posts first.
-- No secondary ordering.
-- No sorting by Metadata dates.
+Build and run the image locally. Verify the catalogue, both blog posts, their images, and the Playground demonstration without mounting the host repository.
 
-Construct visitor links from returned Post IDs through the shared Stage 2 URL builder. Display titles, summaries, and Metadata dates without retrieving post bodies or media.
+This does not perform remote deployment or establish a production database adapter.
 
-Each homepage request starts without a cursor so refresh discovers newly published posts.
+**Validation:** Image contents and local container HTTP checks, independently of host development checks.
 
-Provide a normal empty state for an empty catalogue. A storage failure must produce an explicit error response rather than being presented as an empty catalogue.
+### 9. Integrate tests and documentation
 
-Avoid response caching that could hide newly committed posts.
+Use independent test configuration and isolated storage roots for tests that publish data. Use small page sizes to exercise pagination.
 
-### 7. Retire static discovery from the public flow
+Publish through the CLI while the same server remains running, then verify visibility from the homepage and first catalogue page.
 
-Retain authored source documents, source images, and preparation tooling.
+Keep checks against the repository baseline read-only. Shared-root mutation and restoration remain Stage 4 responsibilities.
 
-Public homepage and post routes must not fall back to the static collection when persistence returns no result or an error.
+Add focused runtime tests to `npm run quality`, retaining existing checks.
 
-Do not ingest source files during server startup or requests. Publication remains an explicit CLI operation.
+Update requirements and operating documentation to reflect:
 
-Preserve independently served executable artifacts under `public/artifacts/`.
+- Blog-post and Playground terminology.
+- New routes and retirement of static blog-post serving.
+- Catalogue query parameters and navigation semantics.
+- Configuration selection and path resolution.
+- Publication visibility without restart.
+- Ignored preparation manifests and the repository-owned baseline.
+- Image packaging and local container verification.
+- The distinction between filesystem persistence and a future production database.
 
-Legacy slug redirects are outside this stage. Visitor links use Post UUIDs.
-
-### 8. Add runtime tests and update guidance
-
-Add focused rendering and HTTP integration tests using independent test configuration and isolated storage roots.
-
-Reuse the publication CLI when verifying that newly committed posts become visible to an already-running server.
-
-Add the focused test command to `npm run quality` while preserving earlier-stage checks.
-
-Update README and AGENTS to explain:
-
-- Shared CLI/Astro storage selection.
-- Explicit runtime configuration.
-- Request-time post and media lookup.
-- Latest-first Registry ordering and first-page refresh.
-- Generated visitor URLs and configured origin.
-- Error responses and empty-catalogue behavior.
-- Retained source files and explicit ingestion.
-- The local-only scope of this implementation.
-
-Keep tracked-baseline checks read-only in this stage. Automated mutation and exact restoration of that root belong to Stage 4.
+Reconcile the Stage 4 plan with the new routes and Playground boundary through its own review.
 
 ## Integration Validation
 
 | Area | Required evidence |
 | --- | --- |
-| Configuration | Independent runtime test settings work; missing settings fail without hidden defaults |
-| Homepage discovery | Only registered posts appear, using catalogue/metadata reads without loading bodies or media |
-| Ordering | Posts appear by Registry timestamp descending, even when Metadata dates imply a different order |
-| Pagination | A small configured batch size exercises multiple older-than pages without omissions or duplicates |
-| Empty catalogue | The homepage displays a valid empty state |
-| Storage failure | A failed catalogue read produces an error, not a misleading empty state |
-| Post rendering | Complete text, whitespace, embedded styles, captions, and alternative text survive reconstruction and rendering |
-| Chunk boundaries | Text split inside tags or graphic references renders correctly after full reconstruction |
-| Media | Responses contain exact bytes and recorded MIME types |
-| Ownership | Another post’s Media UUID cannot be retrieved through the requested Post |
-| HTTP errors | Malformed IDs, unknown IDs, corrupt registered records, and I/O failures receive the specified responses |
-| Fresh publication | Publish through the CLI while the same server runs; a fresh homepage request exposes the link and the post/media routes return complete content |
-| URL construction | Homepage and CLI use the same Post UUID route and configured visitor origin |
-| Artifact preservation | The baseline demonstration retains its prepared framing and sandbox attributes |
-| Static-flow removal | Public routes no longer enumerate or render static collection entries |
-| Baseline preservation | Runtime inspection leaves the tracked baseline unchanged |
+| Configuration | Independent settings work; missing required values fail |
+| Homepage | Always requests the first batch without a cursor |
+| Catalogue reads | Loads one batch plus the optional one-item probe; never loads bodies or images |
+| Ordering | Registry timestamps alone determine newest-first ordering |
+| Forward navigation | Older-post links use the returned cursor and preserve history |
+| Backward navigation | Newer-post links unwind history through multiple pages |
+| URL persistence | Reloading or sharing a catalogue URL reproduces its requested position |
+| Input handling | Malformed, duplicated, or inconsistent cursor parameters fail explicitly |
+| Final page | No Older-post link appears when the probe finds no further posts |
+| Empty page | A valid empty result retains navigation toward newer posts |
+| Post rendering | Complete text, whitespace, styles, captions, and alternative text are preserved |
+| Media | Responses match stored bytes and MIME types; ownership is enforced |
+| HTTP errors | Invalid IDs, unknown records, corruption, and I/O failures receive the specified responses |
+| Fresh publication | Homepage and first catalogue page reveal newly published posts without restart |
+| Playground | Counter demo is served at its Playground route with existing sandbox behavior and no persistence records |
+| Static blog removal | Old static blog routes no longer serve migrated posts |
+| Packaging | The image serves the baseline and Playground without host mounts or manifests |
+| Preservation | Validation does not modify baseline data or retained authoring sources |
 
-Use controlled, well-separated timestamps for test fixtures.
+Use controlled, well-separated Registry timestamps in fixtures.
 
-Run focused tests and `npm run quality`. Actual browser navigation, image loading, and shared-root lifecycle coverage are completed in Stage 4.
+Run focused tests and `npm run quality`. Verify local container behavior separately.
+
+Browser interaction, actual image loading, demo-counter interaction, and shared-root restoration are completed in Stage 4.
 
 ## Risks
 
-- **Residual static behavior:** Route-level prerendering or collection fallback could conceal missing runtime integration. Remove both from public post resolution.
-- **Presentation changes:** Rewriting the entire body unnecessarily could alter styles or markup. Restrict rendering transformations to agreed references.
-- **Duplicate artifact presentation:** Both prepared content and the old layout could render the demonstration. Keep one presentation path.
-- **Origin mismatch:** A configured visitor origin may differ from the running server. Tests supply the actual origin explicitly; documentation explains how local operators align them.
-- **Production assumptions:** The existing production image does not include the local store in its runtime stage. Local runtime validation does not establish production deployment readiness.
+- **Cursor semantics:** Despite its name, `next_page` selects the current request’s page. Document and test this consistently.
+- **Cursor history growth:** Each forward step adds a timestamp to the URL. This is accepted for the initial blog catalogue.
+- **Fresh first-page reads:** Returning to the first page can show newly published posts; no snapshot guarantee is provided.
+- **Residual static serving:** Retained source files must not remain publicly routed as blog posts.
+- **Presentation changes:** Restrict body transformations to graphic-reference resolution.
+- **Packaging omissions:** Verify configuration and baseline availability inside the running image.
 
 ## Implementation Handoff
 
-Requires Stages 1 and 2 to be implemented and validated.
+Start with configuration and URL conventions, then implement catalogue behavior and content separation before changing public routes.
 
 This stage is complete when:
 
-- Public discovery uses only the persisted registry.
-- Posts and media resolve at request time through the application service.
-- Homepage ordering follows the approved latest-first contract.
-- A CLI publication becomes accessible on the already-running server.
-- Existing post and artifact presentation is preserved.
-- Runtime tests use independent configuration.
-- README and AGENTS reflect the implemented flow.
-- `npm run quality` passes.
+- Blog posts are served exclusively through persistence.
+- Playground pages remain static and independent of blog models.
+- The agreed routes and navigation are implemented.
+- Catalogue forward and backward navigation survive refresh and direct linking.
+- New publications appear without rebuild or restart.
+- Both existing posts and their images are available in the deployable image.
+- Baseline records and retained ordinary authoring sources remain unchanged.
+- Documentation and tests reflect the revised requirements.
+- Focused checks, `npm run quality`, and local container verification pass.
 
-The next stage adds browser E2E against the tracked root, guaranteed storage restoration, and final milestone verification.
+Stage 4 adds browser E2E and shared-root restoration.

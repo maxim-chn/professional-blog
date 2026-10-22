@@ -7,7 +7,7 @@ import { PersistenceError, requireInput } from '../persistence/errors.ts';
 import { uuid } from '../persistence/models/fields.ts';
 
 const VISITOR_PROTOCOLS: readonly string[] = ['http:', 'https:'];
-const POST_VISITOR_PATH_PATTERN = '/blog/{postId}/';
+const POST_VISITOR_PATH_PATTERN = '/blog-post/{postId}/';
 
 export function resolveVisitorOrigin(value: unknown): string {
   requireInput(isNonEmpty(value), 'visitor origin must be a nonblank string');

@@ -4,15 +4,16 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev",
+    "dev": "ASTRO_RUNTIME_CONFIG=\"$PWD/config/astro-runtime.json\" ASTRO_TELEMETRY_DISABLED=1 astro dev",
     "build": "ASTRO_TELEMETRY_DISABLED=1 astro build",
     "check": "ASTRO_TELEMETRY_DISABLED=1 astro check",
     "format:check": "prettier --check .",
     "lint": "eslint .",
-    "quality": "npm run format:check && npm run lint && npm run check && npm run build && npm run test:persistence",
-    "preview": "ASTRO_TELEMETRY_DISABLED=1 astro preview",
-    "start": "node ./dist/server/entry.mjs",
+    "quality": "npm run format:check && npm run lint && npm run check && npm run build && npm run test:persistence && npm run test:runtime",
+    "preview": "ASTRO_RUNTIME_CONFIG=\"$PWD/config/astro-runtime.json\" ASTRO_TELEMETRY_DISABLED=1 astro preview",
+    "start": "ASTRO_RUNTIME_CONFIG=\"$PWD/config/astro-runtime.json\" node ./dist/server/entry.mjs",
     "publish:post": "node --experimental-strip-types scripts/publish-post.ts",
+    "test:runtime": "node --experimental-strip-types --test tests/runtime/*.test.ts",
     "test:persistence": "node --experimental-strip-types --test tests/persistence/*.test.ts"
   },
   "dependencies": {

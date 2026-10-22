@@ -1,10 +1,41 @@
 ---
 import { getCollection } from 'astro:content';
+import PostCatalogue from '@components/PostCatalogue.astro';
 import BaseLayout from '@layouts/BaseLayout.astro';
+import {
+  loadCataloguePage,
+  type CataloguePage,
+} from '../lib/server/catalogue.ts';
+import { createErrorResponse } from '../lib/server/http-errors.ts';
+import type { RuntimePersistence } from '../lib/server/persistence.ts';
+import { buildPlaygroundUrl } from '../lib/server/playground-url.ts';
+import { loadRuntime } from '../lib/server/runtime.ts';
 
-const posts = (await getCollection('blog'))
-  .filter((post) => !post.data.draft)
-  .sort((a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf());
+export const prerender = false;
+
+let runtime: RuntimePersistence;
+try {
+  runtime = await loadRuntime();
+} catch (error) {
+  return createErrorResponse(error, 'configuration');
+}
+
+let catalogue: CataloguePage;
+try {
+  catalogue = await loadCataloguePage(
+    runtime.service,
+    runtime.cataloguePageSize,
+    runtime.visitorOrigin,
+    new URLSearchParams(),
+  );
+} catch (error) {
+  return createErrorResponse(error, 'request');
+}
+
+const playgrounds = await getCollection(
+  'playground',
+  ({ data }) => !data.draft,
+);
 ---
 
 <BaseLayout
@@ -16,24 +47,26 @@ const posts = (await getCollection('blog'))
     <h1>Notes, experiments, and runnable software artifacts.</h1>
   </section>
 
-  <section class="post-list" aria-label="Published posts">
-    {
-      posts.map((post) => (
-        <article class="post-card">
-          <p>
-            {post.data.publishDate.toLocaleDateString('en', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })}
-          </p>
-          <h2>
-            <a href={`/blog/${post.id}/`}>{post.data.title}</a>
-          </h2>
-          <p>{post.data.description}</p>
-        </article>
-      ))
-    }
+  <PostCatalogue catalogue={catalogue} />
+
+  <section
+    id="playground"
+    class="playground-list"
+    aria-labelledby="playground-title"
+  >
+    <h2 id="playground-title">Playground</h2>
+    <ul>
+      {
+        playgrounds.map((playground) => (
+          <li>
+            <a href={buildPlaygroundUrl(runtime.visitorOrigin, playground.id)}>
+              {playground.data.title}
+            </a>
+            <p>{playground.data.description}</p>
+          </li>
+        ))
+      }
+    </ul>
   </section>
 </BaseLayout>
 
@@ -58,26 +91,9 @@ const posts = (await getCollection('blog'))
     max-width: 12ch;
   }
 
-  .post-list {
-    display: grid;
-    gap: 1rem;
-  }
-
-  .post-card {
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    padding: 1rem;
-  }
-
-  .post-card p {
-    color: var(--color-muted);
-    margin: 0;
-  }
-
-  .post-card h2 {
-    font-size: 1.25rem;
-    line-height: 1.25;
-    margin: 0.35rem 0;
+  .playground-list {
+    border-top: 1px solid var(--color-border);
+    margin-top: 2rem;
+    padding-top: 1.5rem;
   }
 </style>

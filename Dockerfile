@@ -10,9 +10,12 @@ RUN npm run build
 FROM node:22-slim AS runtime
 ENV HOST=0.0.0.0
 ENV PORT=8080
+ENV ASTRO_RUNTIME_CONFIG=/app/config/astro-runtime.json
 WORKDIR /app
 COPY --from=build /app/dist ./dist
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY package.json ./
+COPY config/astro-runtime.json config/publication.json config/persistence.json ./config/
+COPY local_database/ ./local_database/
 EXPOSE 8080
 CMD ["node", "./dist/server/entry.mjs"]

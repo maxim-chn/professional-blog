@@ -1,0 +1,86 @@
+---
+import type { CataloguePage } from '../lib/server/catalogue.ts';
+import { isNonEmptyArray } from '../lib/utilities/array_kit.ts';
+
+type Props = {
+  catalogue: CataloguePage;
+};
+
+const { catalogue } = Astro.props;
+---
+
+<section class="post-list" aria-label="Published blog posts">
+  {
+    isNonEmptyArray(catalogue.items) ? (
+      catalogue.items.map((item) => (
+        <article class="post-card">
+          <p>
+            <time datetime={item.metadata.created_at}>
+              {new Date(item.metadata.created_at).toLocaleDateString('en', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })}
+            </time>
+          </p>
+          <h2>
+            <a href={item.visitor_url}>{item.metadata.title}</a>
+          </h2>
+          <p>{item.metadata.summary}</p>
+        </article>
+      ))
+    ) : (
+      <p>No blog posts on this page.</p>
+    )
+  }
+</section>
+
+<nav class="catalogue-navigation" aria-label="Blog post catalogue pages">
+  <a href={catalogue.firstPageUrl}>Latest posts</a>
+  {
+    catalogue.newerPostsUrl !== null && (
+      <a href={catalogue.newerPostsUrl} rel="prev">
+        Newer posts
+      </a>
+    )
+  }
+  {
+    catalogue.olderPostsUrl !== null && (
+      <a href={catalogue.olderPostsUrl} rel="next">
+        Older posts
+      </a>
+    )
+  }
+</nav>
+
+<style>
+  .post-list {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .post-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 1rem;
+  }
+
+  .post-card p {
+    color: var(--color-muted);
+    margin: 0;
+  }
+
+  .post-card h2 {
+    font-size: 1.25rem;
+    line-height: 1.25;
+    margin: 0.35rem 0;
+  }
+
+  .catalogue-navigation {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+</style>

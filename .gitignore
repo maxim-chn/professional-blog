@@ -8,3 +8,8 @@ blogpost_manifests/
 .env.local
 npm-debug.log*
 .DS_Store
+
+blog_persistence/
+reference_improvements.txt
+skill_improvements.txt
+taskideas.txt

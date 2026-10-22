@@ -1,0 +1,9 @@
+{
+  "description": "Application Astro runtime settings. Configuration references resolve relative to this file; required settings have no hardcoded fallbacks.",
+  "publicationConfig": "./publication.json",
+  "cataloguePageSize": 10,
+  "settings": {
+    "publicationConfig": "Publication configuration supplying the visitor origin and the reference to persistence configuration.",
+    "cataloguePageSize": "Maximum blog posts displayed on the homepage and each catalogue page. Both use the same size."
+  }
+}

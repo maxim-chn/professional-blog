@@ -1,0 +1,25 @@
+---
+import { getCollection, render } from 'astro:content';
+import PlaygroundLayout from '@layouts/PlaygroundLayout.astro';
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+  const playgrounds = await getCollection(
+    'playground',
+    ({ data }) => !data.draft,
+  );
+
+  return playgrounds.map((playground) => ({
+    params: { demoAppName: playground.id },
+    props: { playground },
+  }));
+}
+
+const { playground } = Astro.props;
+const { Content } = await render(playground);
+---
+
+<PlaygroundLayout playground={playground}>
+  <Content />
+</PlaygroundLayout>

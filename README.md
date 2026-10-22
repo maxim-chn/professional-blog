@@ -8,14 +8,14 @@ A personal engineering blog and experimental platform for exploring modern softw
 | -------------------- | ----------------------------- |
 | Site framework       | Astro                         |
 | Language             | TypeScript                    |
-| Content              | Markdown / MDX                |
+| Content              | Published HTML / static MDX   |
 | Executable artifacts | Independent HTML + JavaScript |
 | Artifact execution   | Isolated browser sandbox      |
 | Runtime/build        | Node.js                       |
 | Packaging            | Docker                        |
 | Hosting              | Google Cloud Run              |
 | Source/deployment    | GitHub                        |
-| Database             | None for v0_1                 |
+| Database             | Filesystem-backed posts       |
 | CMS                  | None for v0_1                 |
 | Authentication       | None for v0_1                 |
 
@@ -57,28 +57,26 @@ bash deploy_tools/scripts/gcp/undeploy.sh
 
 The blog owns composition, navigation, content, and surrounding presentation. Executable artifacts remain independent units and must not be required to use Astro or another blog-framework component model.
 
-Acceptance criterion: the stack must permit a blog post to render an independently authored HTML + JavaScript artifact within an isolated browser context without requiring that artifact to use the blog's application framework.
+Blog posts contain persisted publication-ready HTML and images. Playground pages present independently authored HTML + JavaScript applications in a sandbox. Application code and Playground descriptions remain outside blog persistence.
 
 ## Non-Functional Requirement: Sandbox-Renderable Executable Artifacts
 
-The platform must support blog content that incorporates an independently developed executable artifact scoped to HTML + JavaScript.
+The platform supports Playground pages that incorporate independently developed executable artifacts scoped to HTML + JavaScript.
 
-The artifact should be treated as an independent unit rather than as a natural/native component of the blog framework. The blog provides a sandbox in which the artifact is rendered and executed as part of the surrounding post experience.
+The artifact is an independent unit. The Playground page provides its description and sandbox through `ArtifactSandbox.astro`.
 
 Implications for stack selection:
 
-- A post may combine ordinary authored content with an independently built HTML + JavaScript artifact.
-- The artifact may originate as a small standalone project and later be incorporated into a post as a runnable demo.
+- A Playground page combines descriptive content with an independently built HTML + JavaScript application.
+- The application may originate as a standalone project and later be incorporated into Playground as an interactive demo.
 - The publishing/build flow must be able to carry the artifact into the deployed site and make it available to the sandbox.
-- Isolation/sandboxing is a first-class architectural requirement; the implementation mechanism is deliberately not selected yet.
+- Isolation/sandboxing is a first-class architectural requirement. The current integration uses an iframe with `sandbox="allow-scripts"`.
 - Framework choice must not require executable artifacts to be rewritten as framework-native components.
 
-Deliberate non-decisions:
+Future changes requiring separate design:
 
-- iframe vs another sandbox mechanism
-- sandbox permissions
-- artifact packaging convention
-- build orchestration
+- replacing the iframe sandbox mechanism or changing its permissions
+- changing the artifact packaging convention or build orchestration
 - inter-process/message APIs
 - security policy
 
@@ -103,18 +101,21 @@ The core principle is that premium is temporal, not hierarchical. Payment primar
 | Public Transition       | Premium artifacts become public while preserving identity, references, history, and relationships.                                    | Keeps earlier work valuable over time and supports the principle that premium is temporal, not hierarchical.              |
 | Low-Friction Publishing | New valuable artifacts can be added and connected with little platform administration.                                                | Keeps the author's effort focused on creating useful material rather than operating the platform.                         |
 
-## Initial Project Structure
+## Project Structure
 
 - `src/pages/` owns route composition.
-- `src/layouts/` owns shared page and post presentation.
-- `src/content/blog/` stores authored Markdown / MDX posts.
-- `src/content.config.ts` defines typed frontmatter, including optional artifact references.
+- `src/layouts/` owns separate blog-post and Playground presentation.
+- `src/content/blog/` retains migration sources without exposing static blog routes.
+- `src/content/playground/` stores static demo descriptions and explicit artifact metadata.
+- `src/content.config.ts` defines the Playground collection.
+- `src/lib/server/` owns runtime composition, catalogue navigation, and stored-body rendering.
+- `local_database/` contains the tracked two-post baseline.
 - `src/components/ArtifactSandbox.astro` is the single blog-owned artifact boundary.
 - `public/artifacts/` stores independently authored HTML + JavaScript artifacts that are copied into the deployed site as static files.
 
-## Local persistence (Stage 1)
+## Local persistence
 
-The persistence service is implemented independently of Astro routes. The homepage and post pages still use the static content collection until the runtime integration stage. Publication CLI commands, ingestion, a tracked two-post baseline, and browser E2E are subsequent stages; they are not implemented yet.
+Astro retrieves blog posts from the filesystem persistence service at request time. The publication CLI and tracked two-post baseline are available. Preparation manifests live in the ignored `blogpost_manifests/` directory. Browser E2E remains a separate stage.
 
 `src/lib/persistence/models/` contains one module per logical model. Each owns its record constraints; the application service owns complete-bundle relationships, and the filesystem adapter owns stored-record integrity and visibility. There is no independent validation pipeline. Shared catalogue, stored-record envelope, stored-media shape, and Registry-association checks live in `service.ts`; the adapter delegates to them and classifies stored-data errors. Summaries must be nonblank. `isNonEmptyString` accepts nonzero-length content, including whitespace-only chunks, while `isNonEmpty` checks trimmed nonblank text.
 
@@ -143,7 +144,7 @@ Handled pre-commit failures leave the old catalogue intact and attempt to remove
 
 Content chunks contain 1 through the configured maximum Unicode code points. They are stored unchanged and reconstructed in Post order without separators. Chunk boundaries may split HTML or a graphic token.
 
-A graphic reference is the explicit reserved token `{{graphic:identifier}}`, for example `<img src="{{graphic:cover}}">`. Its identifier starts with an ASCII letter/digit and then contains letters, digits, underscores, or hyphens. The owning Post maps it to a Media UUID under the correct MIME type. References are checked after reconstructing the whole body; arbitrary UUID-like prose is not interpreted. A later renderer will substitute browser URLs without modifying stored text.
+A graphic reference is the explicit reserved token `{{graphic:identifier}}`, for example `<img src="{{graphic:cover}}">`. Its identifier starts with an ASCII letter/digit and then contains letters, digits, underscores, or hyphens. The owning Post maps it to a Media UUID under the correct MIME type. References are checked after reconstructing the whole body; arbitrary UUID-like prose is not interpreted. The runtime renderer substitutes absolute media URLs without modifying stored text.
 
 Media format checks identify PNG, JPEG, GIF, and WebP signatures and compare the detected format with the configured allowed MIME types. They also verify SHA-256 over the actual bytes. This is format identification, not full image decoding. SVG and other formats are rejected. Captions, alt text, and styles remain in the content.
 
@@ -153,4 +154,32 @@ Media format checks identify PNG, JPEG, GIF, and WebP signatures and compare the
 
 `getPost` first resolves committed Registry membership and then reads complete, validated records and bytes. An unknown/unregistered post is `NOT_FOUND`; a missing or corrupt registered record is `STORAGE_INTEGRITY`. Read I/O failures remain `IO_FAILURE`. All reads observe current committed state without a catalogue cache.
 
-Run `npm run test:persistence` for isolated contract and failure tests. `npm run quality` retains formatting, linting, Astro/type checks, and the production build, and also runs the persistence tests. Tests use Node's native TypeScript stripping/test runner (Node 22.18 or later) and require no separate test framework. They never write to `local_database`; do not ignore that root, since the next stage will add its tracked baseline.
+Run `npm run test:persistence` for isolated contract and failure tests. Run `npm run build` followed by `npm run test:runtime` for rendering, navigation, and HTTP integration tests. `npm run quality` runs formatting, linting, Astro/type checks, the production build, and both test suites. Tests use Node's native TypeScript stripping/test runner (Node 22.18 or later). HTTP tests require permission to listen on localhost. Each test cleans up its temporary database and server; the tracked baseline remains unchanged.
+
+## Runtime routes and configuration
+
+- `/` always displays the first catalogue page, ignoring pagination query parameters.
+- `/blog-post-catalogue/` displays the first catalogue page.
+- `/blog-post/<post-id>/` retrieves a persisted blog post.
+- `/media/<post-id>/<media-id>` serves validated image bytes belonging to that post.
+- `/playground/counter-demo/` presents the static counter demo.
+- Old `/blog/` routes are removed without redirects.
+
+Catalogue pages use `next_page` for the current page cursor and repeated `prev_page` parameters for earlier page cursors. For example, the second page has `?next_page=A`; the third has `?next_page=B&prev_page=A`. Cursors are Registry timestamps in canonical UTC with milliseconds. Older and Newer links preserve this state across reloads and shared URLs. The final populated page has no Older link; an empty later page retains navigation back.
+
+`config/astro-runtime.json` selects publication configuration and the shared homepage/catalogue page size. Publication configuration supplies the visitor origin and persistence configuration reference. Referenced paths resolve relative to their containing configuration files.
+
+`npm run dev`, `npm run preview`, and `npm start` explicitly select the application's runtime configuration. For a different configuration, launch the server directly with an absolute `ASTRO_RUNTIME_CONFIG` path. `PERSISTENCE_ROOT` overrides storage with an absolute path; `VISITOR_ORIGIN` overrides the HTTP(S) origin used in visitor links.
+
+For example, after building:
+
+```sh
+ASTRO_RUNTIME_CONFIG="$PWD/config/astro-runtime.json" \
+VISITOR_ORIGIN="http://localhost:8080" \
+HOST=127.0.0.1 PORT=8080 \
+node dist/server/entry.mjs
+```
+
+The final Docker image includes runtime configuration and the existing `local_database`. It excludes preparation manifests and does not publish posts during build or startup. Supply `VISITOR_ORIGIN` with the externally reachable origin when launching a container or configuring Cloud Run; the packaged application configuration uses `http://localhost:4321`.
+
+Malformed post/media identifiers and catalogue cursors return HTTP 400. Unknown posts, media ownership mismatches, and missing Playground pages return 404. Corrupt stored data and configuration failures return 500 without internal paths or error details.

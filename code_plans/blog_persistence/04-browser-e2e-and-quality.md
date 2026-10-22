@@ -6,6 +6,8 @@ Add browser E2E coverage for the completed persistence, publication, and Astro i
 
 Verify the tracked baseline through actual browser navigation. Then publish a new post through the CLI while the same Astro server remains running, refresh the homepage, and open the newly generated link.
 
+Verify URL-based catalogue navigation and the independent Playground route. Blog posts use `/blog-post/<post-id>/`; Playground applications use `/playground/<demo-app-name>/`. Do not restore static blog routes.
+
 After both successful and failed tests, restore designated E2E post data to its Git baseline. Restore all other storage data to its exact pre-run file set and contents, preserving pre-existing author changes.
 
 Include these checks in `npm run quality` and finish repository documentation.
@@ -54,6 +56,7 @@ Include:
 - The tracked storage-root location.
 - Explicit paths identifying dedicated E2E baseline post data and generated E2E post-data locations eligible for Git cleanup.
 - Server host and port settings.
+- Catalogue page size and enough isolated fixture posts to exercise at least three pages.
 - Browser selection and execution settings.
 - Timeouts.
 - Fixture and expected-result locations.
@@ -136,7 +139,7 @@ Ensure teardown runs after setup failures, assertion failures, and normal comple
 
 ### 5. Verify the tracked baseline through the browser
 
-Open the homepage and verify that the baseline entries appear with UUID-based visitor links.
+Open the homepage and verify persistence-backed links use `/blog-post/<post-id>/`. Locate both baseline posts, following catalogue Older links if other committed posts place them beyond the first page.
 
 Click the links for both illustrated posts and verify:
 
@@ -146,11 +149,35 @@ Click the links for both illustrated posts and verify:
 - Image responses use the expected application media routes.
 - Returned image bytes and MIME types match the baseline media.
 
-Verify the artifact demonstration’s framing and sandbox attributes, and exercise its counter to confirm the independent artifact still runs.
+Follow the Playground navigation to `/playground/counter-demo/`. Verify the description, configured frame height, and sandbox attributes, and exercise the counter. Verify that the demonstration is absent from the persistence catalogue and that a missing Playground item returns 404.
 
 Use fixture expectations independent of the rendering implementation. Do not compare the page only against values extracted from that same page.
 
 Verify latest-first Registry ordering. Metadata dates must not determine catalogue order.
+
+### 5a. Verify catalogue navigation through the browser
+
+Use an isolated root and explicit test page size for a scenario containing at least three pages of posts. Publish fixtures with controlled, well-separated Registry timestamps and equal Metadata dates.
+
+Verify:
+
+- The homepage always displays the first page, including when its URL contains pagination parameters.
+- The first catalogue page has no Newer link.
+- Following Older twice produces the expected `next_page` and repeated `prev_page` values.
+- Following Newer twice returns through the same page boundaries.
+- Reloading a later page preserves its posts and navigation.
+- Opening a copied later-page URL in a new browser page produces the same result.
+- Browser Back and Forward restore the expected catalogue pages.
+- The final populated page has no Older link.
+- A valid empty later page retains navigation toward newer posts.
+- Malformed cursors, duplicate `next_page` values, and invalid history return 400.
+- Publishing another post while the server runs makes it visible on homepage refresh and first-page navigation. Existing later-page URLs retain their cursor boundaries.
+
+Use actual links and browser navigation for these checks. Earlier runtime tests supplement this coverage but do not replace it.
+
+### 5b. Remove obsolete static blog-serving artifacts
+
+Remove `src/content/blog/` and any remaining Astro collection definitions, routes, imports, types, or helpers used exclusively for static blog posts. Retain the separate Playground collection and its application assets. Before removing legacy public images, verify that no retained page or Playground entry references them and that the persisted blog media is complete. Verify that the application builds and serves both persisted baseline posts without relying on the removed artifacts.
 
 ### 6. Exercise live publication through the CLI
 
@@ -224,7 +251,9 @@ Cover:
 - Publication and ingestion commands, arguments, and examples.
 - Stable identities and duplicate/conflict behavior.
 - Request-time post and media retrieval.
+- Separate static Playground discovery, routes, and sandbox ownership.
 - Latest-first Registry ordering and older-than pagination.
+- URL-based catalogue history, reloads, shared links, and browser Back/Forward.
 - First-page refresh for newly published posts.
 - Visitor origin and URL construction.
 - E2E serial-execution requirements.
@@ -247,7 +276,9 @@ Check that the requirements and model documents include the approved Stage 1 cha
 | --- | --- |
 | Configuration | E2E uses explicit test settings without application-code fallback defaults |
 | Baseline navigation | Browser clicks open both illustrated posts with complete text and loaded images |
-| Artifact execution | The preserved demonstration renders within its sandbox and its counter works |
+| Playground execution | `/playground/counter-demo/` renders independently of persistence, preserves sandbox attributes, and its counter works |
+| Catalogue navigation | Older/Newer, reloads, shared URLs, and browser Back/Forward preserve page boundaries across at least three pages |
+| Catalogue boundaries | First/final/empty pages expose appropriate links; malformed cursor state returns 400 |
 | Ordering | Homepage order follows Registry timestamps descending |
 | Live publication | The real CLI creates a previously absent fixture while the same server runs |
 | Refresh behavior | Homepage refresh exposes the new link without rebuild or restart |

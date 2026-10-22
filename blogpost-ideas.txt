@@ -2,4 +2,26 @@
   - Monday.com:
     - permission problems post-ChatGPT authorization (for example, board creation)
   - OpenAI:
-    - cooperation between different Agents is not "plumbed" despite being under the same company. What are the reasons? How uncormfortable are the workarounds?
+    - cooperation between different Agents is not "plumbed" despite being under the same company. What are the reasons? 
+      How uncormfortable are the workarounds?
+    - communication of repo concepts, like artifacts, sources of truth. When to define them? 
+      How to spot a group yet named? What's the pre-existing theoretical fundamentals?
+    - design evolution of your agent-development system, rather than stabilization of the blog bootstrap
+    - novel design choices that may seem radical, at first. I.e., server vs Cloud Run service.
+    - sleep on it concept applies. Domain and semantic info is polished over weeks, not days.
+
+2. Agent as a partner
+  - What are the suitable fields?
+    A: where human partner is a professional.
+  - What are the types of responsibilities?
+    A: 1. human is a professional, offloading workload. Partnership is in freedom of addition/transformation of
+          small workload
+       2. human is a novice. Partnership is in agent delivering small steps of execution that teach human and
+          perspective supply.
+  - How to deal with trust issues?
+    A: prepare to fail. This is essential for mutual learn path.
+  - Where to start?
+    A: a coffee conversation. Agent is to explain domain through simple answers, suitable for a chat over a coffee.
+  - How to introduce Agent to a project? I.e., through commands/skills.
+  - How to maintain project with Agent? I.e., after considerable testing - use navigation of skills. It helps to iron out
+    how exactly Agent understands available capabilities.

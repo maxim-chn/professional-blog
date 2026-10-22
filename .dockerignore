@@ -3,3 +3,4 @@ node_modules
 .astro
 .git
 npm-debug.log*
+blogpost_manifests/

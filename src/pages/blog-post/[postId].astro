@@ -1,0 +1,37 @@
+---
+import PostLayout from '@layouts/PostLayout.astro';
+import type { PostBundle } from '../../lib/persistence/contract.ts';
+import { uuid } from '../../lib/persistence/models/fields.ts';
+import { createErrorResponse } from '../../lib/server/http-errors.ts';
+import type { RuntimePersistence } from '../../lib/server/persistence.ts';
+import { renderPostBody } from '../../lib/server/post-rendering.ts';
+import { loadRuntime } from '../../lib/server/runtime.ts';
+
+export const prerender = false;
+
+const { postId } = Astro.params;
+
+try {
+  uuid(postId, 'requested Post id');
+} catch (error) {
+  return createErrorResponse(error, 'request');
+}
+
+let runtime: RuntimePersistence;
+try {
+  runtime = await loadRuntime();
+} catch (error) {
+  return createErrorResponse(error, 'configuration');
+}
+
+let bundle: PostBundle;
+let body: string;
+try {
+  bundle = await runtime.service.getPost(postId);
+  body = renderPostBody(bundle, runtime.visitorOrigin);
+} catch (error) {
+  return createErrorResponse(error, 'request');
+}
+---
+
+<PostLayout metadata={bundle.metadata} body={body} />

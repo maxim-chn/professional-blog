@@ -1,0 +1,40 @@
+---
+import PostCatalogue from '@components/PostCatalogue.astro';
+import BaseLayout from '@layouts/BaseLayout.astro';
+import {
+  loadCataloguePage,
+  type CataloguePage,
+} from '../../lib/server/catalogue.ts';
+import { createErrorResponse } from '../../lib/server/http-errors.ts';
+import type { RuntimePersistence } from '../../lib/server/persistence.ts';
+import { loadRuntime } from '../../lib/server/runtime.ts';
+
+export const prerender = false;
+
+let runtime: RuntimePersistence;
+try {
+  runtime = await loadRuntime();
+} catch (error) {
+  return createErrorResponse(error, 'configuration');
+}
+
+let catalogue: CataloguePage;
+try {
+  catalogue = await loadCataloguePage(
+    runtime.service,
+    runtime.cataloguePageSize,
+    runtime.visitorOrigin,
+    Astro.url.searchParams,
+  );
+} catch (error) {
+  return createErrorResponse(error, 'request');
+}
+---
+
+<BaseLayout
+  title="Blog posts | Professional Blog"
+  description="Browse blog posts, newest first."
+>
+  <h1>Blog posts</h1>
+  <PostCatalogue catalogue={catalogue} />
+</BaseLayout>
