@@ -1,0 +1,9 @@
+{
+  "description": "Independent Astro runtime settings for serial browser E2E. Configuration references resolve relative to this file.",
+  "publicationConfig": "./e2e-publication.json",
+  "cataloguePageSize": 2,
+  "settings": {
+    "publicationConfig": "Publication configuration shared by the E2E server and CLI, supplying the visitor origin and persistence settings.",
+    "cataloguePageSize": "Posts displayed on the homepage and each catalogue page. Isolated pagination scenarios provide enough fixtures to exercise at least three pages."
+  }
+}

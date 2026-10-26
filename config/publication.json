@@ -2,14 +2,10 @@
   "description": "Application publication settings. All paths resolve relative to this file; required settings have no hardcoded fallbacks.",
   "persistenceConfig": "./persistence.json",
   "visitorOrigin": "http://localhost:4321",
-  "legacySourceRoot": "../src/content/blog",
-  "legacyPublicRoot": "../public",
   "preparedRoot": "../blogpost_manifests",
   "settings": {
     "persistenceConfig": "Configuration file supplying the storage root, limits, and supported media types.",
     "visitorOrigin": "Origin used to construct visitor URLs. Does not imply that a server is running.",
-    "legacySourceRoot": "Directory containing retained Markdown and MDX sources for explicit ingestion.",
-    "legacyPublicRoot": "Directory used to resolve legacy public asset paths during ingestion.",
     "preparedRoot": "Directory containing reusable manifests and prepared inputs with stable record identities."
   }
 }

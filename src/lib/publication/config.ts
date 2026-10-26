@@ -6,12 +6,7 @@ import { isMap } from '../utilities/map_kit.ts';
 import { isNonEmpty } from '../utilities/string_kit.ts';
 import { resolveVisitorOrigin } from './visitor-url.ts';
 
-const PATH_FIELDS = [
-  'persistenceConfig',
-  'legacySourceRoot',
-  'legacyPublicRoot',
-  'preparedRoot',
-] as const;
+const PATH_FIELDS = ['persistenceConfig', 'preparedRoot'] as const;
 
 const CONFIGURATION_FIELDS: readonly string[] = [
   ...PATH_FIELDS,
@@ -25,8 +20,6 @@ type PathField = (typeof PATH_FIELDS)[number];
 export interface PublicationConfig {
   persistenceConfig: string;
   visitorOrigin: string;
-  legacySourceRoot: string;
-  legacyPublicRoot: string;
   preparedRoot: string;
 }
 
@@ -76,8 +69,6 @@ export async function loadPublicationConfig(
       directory,
     ),
     visitorOrigin: resolveVisitorOrigin(raw.visitorOrigin),
-    legacySourceRoot: resolveConfiguredPath(raw, 'legacySourceRoot', directory),
-    legacyPublicRoot: resolveConfiguredPath(raw, 'legacyPublicRoot', directory),
     preparedRoot: resolveConfiguredPath(raw, 'preparedRoot', directory),
   };
 }

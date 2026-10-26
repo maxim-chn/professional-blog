@@ -3,6 +3,8 @@ node_modules/
 blogpost_drafts/
 blogpost_plans/
 blogpost_manifests/
+test-results/
+playwright-report/
 .astro/
 .env
 .env.local

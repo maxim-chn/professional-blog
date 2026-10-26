@@ -1,0 +1,15 @@
+{
+  "description": "Independent persistence settings for browser E2E against the tracked baseline. Paths resolve relative to this file. Shared-root writes require the E2E snapshot and restoration lifecycle.",
+  "root": "../../local_database",
+  "contentMaxCodePoints": 1024,
+  "titleMaxCodePoints": 256,
+  "summaryMaxCodePoints": 1024,
+  "supportedMediaTypes": ["image/png", "image/jpeg", "image/gif", "image/webp"],
+  "settings": {
+    "root": "Tracked baseline used by serial browser E2E. Restore designated E2E post data from Git and protected data from its snapshot.",
+    "contentMaxCodePoints": "Maximum content length compatible with the existing baseline chunks.",
+    "titleMaxCodePoints": "Maximum title length compatible with the existing baseline metadata.",
+    "summaryMaxCodePoints": "Maximum summary length compatible with the existing baseline metadata.",
+    "supportedMediaTypes": "Image formats enabled for browser E2E."
+  }
+}

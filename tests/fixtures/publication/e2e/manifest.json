@@ -1,0 +1,25 @@
+{
+  "post": {
+    "id": "f0a7084d-8eb1-431a-a462-9183d1bb0833",
+    "content_ids": ["b0270c8c-497d-4708-836b-ae944b7f4188"],
+    "media_ids": {
+      "image/png": { "cover": "6146cff8-5905-4b9f-84e5-0fd035d4027c" }
+    }
+  },
+  "metadata": {
+    "id": "8a49e4a7-6267-4128-869e-2fdf4766dc7f",
+    "title": "Published while the blog is running",
+    "summary": "A browser E2E fixture with Unicode text and a persisted PNG.",
+    "created_at": "2026-09-01T00:00:00.000Z"
+  },
+  "contents": [
+    { "id": "b0270c8c-497d-4708-836b-ae944b7f4188", "file": "content.txt" }
+  ],
+  "media": [
+    {
+      "id": "6146cff8-5905-4b9f-84e5-0fd035d4027c",
+      "mime_type": "image/png",
+      "file": "cover.png"
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+<h2>A post published during E2E</h2>
+<p>This post becomes available while the same Astro server keeps running.</p>
+<p>Unicode survives publication: café, שלום, and 🌍.</p>
+<figure>
+  <img src="{{graphic:cover}}" alt="E2E fixture pixel" width="32" height="32">
+  <figcaption>A PNG served from persisted post media.</figcaption>
+</figure>
+<p>This final paragraph confirms that the complete post was rendered.</p>

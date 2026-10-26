@@ -1,0 +1,53 @@
+{
+  "postPath": "/blog-post/a744a41b-2bf6-4ffb-8531-fbcca38b1d7d/",
+  "title": "Reading Design Patterns with Some Code Behind You",
+  "summary": "How practical software experience connects design patterns to familiar problems, shared vocabulary, and the judgment to know when a solution earns its place.",
+  "metadataTimestamp": "2026-09-28T00:00:00.000Z",
+  "bodyBlocks": [
+    "I recently finished Design Patterns: Elements of Reusable Object-Oriented Software, the classic by the Gang of Four. What stayed with me was the experience of recognizing familiar design problems—and finding a more structured way to think about them.",
+    "For someone still building experience in software design, that recognition makes the book rewarding. Some ideas initially feel like a refresher. As the discussion develops, they become connected to larger questions about how a system is organized and how its parts work together.",
+    "From fundamentals to a vocabulary for design",
+    "The opening discussion revisits object-oriented design fundamentals and puts them to work in an example. Seeing several patterns participate in the same design gives the reader a reason to care about the individual patterns before studying them in detail.",
+    "That context helped me. A pattern is easier to understand when there is a problem behind it: something that needs to vary, a responsibility that needs a clearer home, or a relationship that is becoming difficult to manage.",
+    "As the book progresses, the reading experience becomes more like working through a catalogue. The earlier discussion gives those entries context. Each one offers another way to recognize a recurring problem and reason about a possible solution.",
+    "Thinking in combinations",
+    "The most valuable idea for me was learning to describe a design through a combination of patterns.",
+    "Knowing a pattern’s name is a starting point. Understanding its role means being able to explain what problem it addresses, why it fits, and what trade-offs come with it. When several patterns appear together, the relationships between those decisions become just as interesting as the individual choices.",
+    "A metaphor for design choices working together: each role matters, and so do the relationships between them.",
+    "The discussions and diagrams helped connect structure to intent. They gave me a way to look beyond the arrangement of classes and ask why that arrangement might be useful—and what it would mean for later changes.",
+    "That is where the book became more than a collection of techniques for me. It offered a vocabulary for discussing design choices that can otherwise be difficult to explain precisely.",
+    "The “Ah!” moment depends on experience",
+    "I would recommend approaching the book with some experience writing software. You do not need to have designed a large system, but it helps to have encountered code that became harder to change than you expected.",
+    "That experience gives the patterns something to connect to. While reading, you can revisit earlier work and consider where a pattern—or a combination of patterns—might have helped.",
+    "For me, that is the “Ah!” moment: recognizing how an idea in the book could apply to a problem I had already encountered. It makes an abstract description feel practical.",
+    "There is also a useful question to keep beside that recognition: would the pattern have made the design clearer, or would it have introduced complexity the problem did not need? Having a name for a solution is useful; understanding when it earns its place is the more interesting challenge.",
+    "A metaphor for revisiting old code: recognizing a possible solution is the start of deciding whether it earns its place.",
+    "A book to return to",
+    "I found Design Patterns a rewarding read, particularly at a stage where I have enough practical experience to recognize some of the problems and still plenty to learn about solving them.",
+    "Its lasting value, for me, is the connection between recurring problems, design intent, and the consequences of a solution. Those connections give me something to return to as I encounter different systems and constraints.",
+    "Finishing the book leaves me with a useful exercise: revisit a past design, describe the problem more clearly, and consider which patterns would have helped—and why.",
+    "Design Patterns: Elements of Reusable Object-Oriented Software"
+  ],
+  "media": [
+    {
+      "path": "/media/a744a41b-2bf6-4ffb-8531-fbcca38b1d7d/e9e029e4-fb91-4b4c-afaf-3cd2714368a5",
+      "file": "media/e9e029e4-fb91-4b4c-afaf-3cd2714368a5.bin",
+      "mimeType": "image/png",
+      "alt": "A teal span joins two charcoal platforms, supported by an ochre block and a dark connector; a spare connector sits nearby.",
+      "caption": "A metaphor for design choices working together: each role matters, and so do the relationships between them.",
+      "naturalWidth": 1672,
+      "naturalHeight": 941,
+      "sha256": "a45b5aac0ff85cf9bacb6d0f843b69a681693859de44968923698402c1055cb4"
+    },
+    {
+      "path": "/media/a744a41b-2bf6-4ffb-8531-fbcca38b1d7d/e6180bdd-1750-4542-936a-a13fc736d540",
+      "file": "media/e6180bdd-1750-4542-936a-a13fc736d540.bin",
+      "mimeType": "image/png",
+      "alt": "A hand holds a translucent teal sheet with branching shapes above a similar sketch on ivory paper.",
+      "caption": "A metaphor for revisiting old code: recognizing a possible solution is the start of deciding whether it earns its place.",
+      "naturalWidth": 1448,
+      "naturalHeight": 1086,
+      "sha256": "e75e29983d801d9518bf426647e09c8964516f05750ca9ef6365954ea9907387"
+    }
+  ]
+}

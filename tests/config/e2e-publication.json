@@ -1,0 +1,11 @@
+{
+  "description": "Independent publication settings for serial browser E2E. Paths resolve relative to this file. Publication requires the E2E snapshot and restoration lifecycle.",
+  "persistenceConfig": "./e2e-persistence.json",
+  "visitorOrigin": "http://127.0.0.1:4323",
+  "preparedRoot": "../../test-results/e2e/prepared",
+  "settings": {
+    "persistenceConfig": "Persistence configuration shared by the publication CLI and E2E server.",
+    "visitorOrigin": "Explicit local E2E server origin. The launcher must bind this address and must not silently reuse an existing server.",
+    "preparedRoot": "Generated publication inputs outside the tracked database, cleaned by the E2E lifecycle."
+  }
+}

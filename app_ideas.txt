@@ -1,2 +1,31 @@
 1. Task tracker with option to visually summarizes work on tasks, in comparison to other tasks.
 2. Recipies manager.
+3. Accounting manager
+  What is it? A personal manager that helps with budget allocation and tracking.
+    Capability that involve analysis and decision making, such as planning and insights generation, are out of scope.
+  What are core capabilities?
+    1. Overview.
+      It is an infographic of monthly status that communicates the:
+        - break down of allocated budget into consumed and remaining.
+        - remaining budget
+        - overspent
+    2. Allocate.
+      It is graphically accessible mechanism to manually allocate a monthly budget.
+      Important traits and capabilities:
+        - category, such as groceries, health, vehicle, presents etc.
+        - limit
+        - grace buffer.
+          An allocation beyond expected limit for special cases. For example, christmas presents purchase usually 
+          tends to "spill over".
+        - recurring items.
+          This is an option, used by default, that "spends" recurring items automatically.
+    3. Recurring items.
+      These are items that belong to a certain category and are expected to occur monthly.
+    4. Re-allocate.
+      Automatically allocates last month budget to the current month.
+    5. Spend
+      It is a graphically accessible mechanism to register spent sum to a particular category.
+      We subract the value from limit, making sure that limit cannot be negative when presented.
+      I.e. there is a need to track limit as negative, however display value for any negative value is 0.
+    6. Spend reversal
+      A graphically accessible mechism that de-registers a spent sum.

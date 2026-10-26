@@ -1,0 +1,23 @@
+{
+  "description": "Explicit settings for serial browser E2E. All paths resolve relative to this file. Server host and port come from the selected runtime publication configuration's visitor origin.",
+  "runtimeConfig": "./e2e-runtime.json",
+  "isolatedRuntimeConfig": "./astro-runtime.json",
+  "baselineConfig": "./e2e-baseline.json",
+  "publicationManifest": "../fixtures/publication/e2e/manifest.json",
+  "outputDirectory": "../../test-results/e2e/browser",
+  "snapshotDirectory": "../../test-results/e2e/snapshots",
+  "logDirectory": "../../test-results/e2e/logs",
+  "reportDirectory": "../../playwright-report",
+  "browser": "chromium",
+  "headless": true,
+  "workers": 1,
+  "retries": 0,
+  "testTimeoutMs": 60000,
+  "expectTimeoutMs": 5000,
+  "startupTimeoutMs": 10000,
+  "shutdownTimeoutMs": 5000,
+  "publicationTimeoutMs": 10000,
+  "paginationFixtureCount": 5,
+  "trace": "retain-on-failure",
+  "screenshot": "only-on-failure"
+}

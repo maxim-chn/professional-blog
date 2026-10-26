@@ -1,0 +1,25 @@
+{
+  "postPath": "/blog-post/f0a7084d-8eb1-431a-a462-9183d1bb0833/",
+  "title": "Published while the blog is running",
+  "summary": "A browser E2E fixture with Unicode text and a persisted PNG.",
+  "metadataTimestamp": "2026-09-01T00:00:00.000Z",
+  "bodyBlocks": [
+    "A post published during E2E",
+    "This post becomes available while the same Astro server keeps running.",
+    "Unicode survives publication: café, שלום, and 🌍.",
+    "A PNG served from persisted post media.",
+    "This final paragraph confirms that the complete post was rendered."
+  ],
+  "media": [
+    {
+      "path": "/media/f0a7084d-8eb1-431a-a462-9183d1bb0833/6146cff8-5905-4b9f-84e5-0fd035d4027c",
+      "file": "cover.png",
+      "mimeType": "image/png",
+      "alt": "E2E fixture pixel",
+      "caption": "A PNG served from persisted post media.",
+      "naturalWidth": 1,
+      "naturalHeight": 1,
+      "sha256": "5e3d382db4dd83d59aa5742793ad6b7903409e865c83bcbc54835049f043bc15"
+    }
+  ]
+}

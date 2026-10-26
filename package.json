@@ -9,12 +9,15 @@
     "check": "ASTRO_TELEMETRY_DISABLED=1 astro check",
     "format:check": "prettier --check .",
     "lint": "eslint .",
-    "quality": "npm run format:check && npm run lint && npm run check && npm run build && npm run test:persistence && npm run test:runtime",
+    "quality": "npm run format:check && npm run lint && npm run check && npm run build && npm run test:persistence && npm run test:runtime && npm run test:support && npm run test:e2e",
     "preview": "ASTRO_RUNTIME_CONFIG=\"$PWD/config/astro-runtime.json\" ASTRO_TELEMETRY_DISABLED=1 astro preview",
     "start": "ASTRO_RUNTIME_CONFIG=\"$PWD/config/astro-runtime.json\" node ./dist/server/entry.mjs",
     "publish:post": "node --experimental-strip-types scripts/publish-post.ts",
     "test:runtime": "node --experimental-strip-types --test tests/runtime/*.test.ts",
-    "test:persistence": "node --experimental-strip-types --test tests/persistence/*.test.ts"
+    "test:persistence": "node --experimental-strip-types --test tests/persistence/*.test.ts",
+    "test:support": "node --experimental-strip-types --test --test-concurrency=1 tests/support/*.test.ts",
+    "test:e2e:install": "PLAYWRIGHT_BROWSERS_PATH=0 playwright install chromium",
+    "test:e2e": "PLAYWRIGHT_BROWSERS_PATH=0 playwright test && node --experimental-strip-types --test tests/e2e/failure-supervisor.test.ts"
   },
   "dependencies": {
     "@astrojs/markdown-remark": "7.2.4",
@@ -25,6 +28,7 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "1.64.1",
     "@types/node": "^22.20.1",
     "@typescript-eslint/parser": "^8.69.0",
     "eslint": "^10.9.1",
