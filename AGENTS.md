@@ -1,277 +1,61 @@
 # Repository Instructions
 
-Before considering any implementation task complete, run:
+## Working approach
 
-```sh
-npm run quality
-```
+Use this file as an overview and navigation guide. Read the references relevant to the task, then inspect the implementation, configuration, callers, and tests before drawing conclusions. Documentation provides context; verify detailed behavior against current code and observed execution. Report discrepancies rather than silently choosing an interpretation.
 
-The quality gate must pass without formatting, linting, Astro/type-checking, or production build failures.
+For defects, reproduce the behavior when practical and use errors, logs, and targeted tests to guide investigation. Distinguish verified facts from hypotheses. Explain responsibilities, dependencies, and runtime flow with supporting evidence instead of transcribing source.
 
-## Python Task Environment
+Keep changes within the requested scope. Infer dependencies from imports, references, configuration, and runtime behavior, not directory hierarchy. Change underlying artifacts before their dependents. Avoid unrelated refactoring or infrastructure additions.
 
-Use a project-local Python virtual environment when task execution needs custom Python scripts or third-party Python packages.
+Follow explicitly invoked repository skills, including their review requirements:
+[planning](.codex/skills/plancodechanges/SKILL.md),
+[implementation](.codex/skills/changecode/SKILL.md), and
+[troubleshooting](.codex/skills/troubleshoot/SKILL.md).
 
-```sh
-python3 -m venv .venv
-.venv/bin/python -m pip install <package>
-.venv/bin/python <script>
-```
+## Architectural boundaries
 
-Do not install task-specific Python packages into the system Python environment. Do not commit `.venv/` or generated Python cache files.
+- Blog posts use persistence-backed discovery and request-time rendering. Do not reintroduce static blog sources or legacy ingestion. Publication is explicit, never a build or startup side effect.
+- Playground descriptions and executable applications remain outside blog persistence. The blog owns composition and sandbox integration; applications remain independent HTML + JavaScript.
+- Preserve sandbox isolation. Changes to permissions, messaging, packaging, or execution mechanisms require explicit task scope.
+- Models own record constraints, the persistence service owns cross-record relationships, and adapters own storage behavior. Do not introduce an independent validation module.
+- Operational settings belong in configuration files without hardcoded fallbacks. Application and test configurations remain independent.
+- Preserve timestamp-only, newest-first Registry ordering. Publication assumes sequential, well-separated timestamps; do not introduce collision handling or synthetic production timestamps.
 
-## Repository Semantic Map
+## Where to investigate
 
-### Technology Stack
+- **Product, stack, and ownership:** Read [Product Strategy](README.md#product-strategy), [Technology Stack](README.md#technology-stack), and [Architectural Boundary](README.md#architectural-boundary).
 
-| Concern                      | Repository choice             |
-| ---------------------------- | ----------------------------- |
-| Site framework               | Astro                         |
-| Application language         | TypeScript                    |
-| Authored content             | Markdown / MDX                |
-| Executable artifacts         | Independent HTML + JavaScript |
-| App/build runtime            | Node.js                       |
-| Production package           | Docker container              |
-| Production runtime target    | Google Cloud Run              |
-| Source and deployment origin | GitHub                        |
+- **Routes, navigation, and rendering:** Start with [Runtime Routes and Configuration](README.md#runtime-routes-and-configuration). Inspect `src/pages/`, `src/lib/server/`, and `src/components/PostCatalogue.astro`.
 
-v0_1 intentionally excludes databases, CMS infrastructure, authentication, and
-application state infrastructure. Do not add any of these unless the task
-explicitly requires it.
+- **Playground and sandbox:** Read the [sandbox requirement](README.md#non-functional-requirement-sandbox-renderable-executable-artifacts). Inspect `src/content.config.ts`, `src/content/playground/`, `src/components/ArtifactSandbox.astro`, and `public/artifacts/`.
 
-### System Responsibilities
+- **Persistence and publication:** Read [Persistence Mechanism](README.md#persistence-mechanism) and [Library implementation](src/lib/README.md). Start implementation tracing at `src/lib/persistence/contract.ts`, `src/lib/persistence/service.ts`, and `src/lib/publication/`.
 
-The repository has two separate execution domains:
+- **Filesystem storage:** Read [Filesystem persistence](src/lib/README.md#filesystem-persistence). Inspect `src/lib/persistence/filesystem.ts` and `config/persistence.json`.
 
-| Domain              | Owns                                                                                                                                                                                 | Must not own                                                              |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
-| Blog Platform       | Site structure, navigation, authored posts, author/context information, content metadata, post-artifact relationships, artifact-boundary presentation, publication/build integration | The internal implementation of executable artifacts                       |
-| Executable Artifact | Its HTML, JavaScript behavior, artifact-specific assets, and browser-side execution                                                                                                  | Blog routing, content metadata, Astro components, or publication workflow |
+- **Tests and recovery:** Read [Browser E2E](README.md#browser-e2e). Inspect `tests/config/`, `tests/support/`, and `tests/e2e/`.
 
-Architectural invariant: the blog owns composition, not executable-artifact
-implementation. Do not require an executable artifact to become an Astro
-component or otherwise adopt the blog framework.
+- **Packaging and deployment:** Read [Deployment tools](deploy_tools/README.md). Inspect `Dockerfile` and `deploy_tools/scripts/gcp/`.
 
-### Astro Application
+Use [Project Structure](README.md#project-structure) for the broader repository map. Follow imports and call sites beyond these entry points as the task requires.
 
-`src/` contains the Astro application. Treat Astro pages, components, content
-configuration, and TypeScript modules as Blog Platform code.
+## Verification and data protection
 
-| Responsibility        | What to trace                                            |
-| --------------------- | -------------------------------------------------------- |
-| Route resolution      | How a URL maps to a page or content entry                |
-| Content lookup        | How collections/configuration locate an entry            |
-| Content rendering     | How the resolved entry becomes page output               |
-| Page composition      | How layouts, components, and content assemble            |
-| Metadata              | How page/content metadata is produced and consumed       |
-| Navigation            | How pages expose links and hierarchy                     |
-| Artifact presentation | How the blog frames or references an executable artifact |
+Before considering an implementation complete, run `npm run quality`. It must pass unless the task explicitly sets a different completion condition. Report failures accurately; never weaken or bypass checks to obtain a passing result. Commands are defined in `package.json`; prerequisites and test scope are described under [Related checks](README.md#related-checks).
 
-When investigating Astro code, identify the responsibility first; do not infer
-behavior from file location alone.
-
-### Authored Content
-
-Markdown / MDX is authored content: data consumed by the Blog Platform, not
-application routing or executable-artifact implementation.
-
-| Content concern    | Responsibility                              |
-| ------------------ | ------------------------------------------- |
-| Entry              | The Markdown / MDX document and frontmatter |
-| Collection/config  | Describes and validates content             |
-| Route/lookup logic | Locates the intended entry                  |
-| Rendering logic    | Renders the resolved entry                  |
-
-For rendering failures, trace the full lifecycle from discovery through lookup
-to rendering before blaming the document itself.
-
-### Executable Artifacts
-
-Executable artifacts stay outside the Astro component model. They may currently
-live under `public/artifacts/<artifact-name>/`.
-
-| Contents                                                        | Constraint                                                                  |
-| --------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| `index.html`, JavaScript, CSS, images, and other browser assets | Keep it authorable and understandable without Astro-specific implementation |
-
-The current layout is an implementation detail, not a permanent packaging
-contract unless a later task explicitly establishes one.
+Before running shared-storage E2E, read [Storage ownership and recovery](README.md#storage-ownership-and-recovery). Use project-local Chromium and serial execution without overlapping author publication. Git restoration is limited to designated E2E post data; protect author data and unrelated artifacts. Retain recovery evidence when restoration fails.
 
-### Artifact Sandbox Boundary
+Keep development checks, application tests, container verification, and deployed-service verification distinct. Success in one does not establish success in another. Container verification must work without mounting the host repository. Follow the [deployment sequence](deploy_tools/README.md#deployment-sequence) when deployment is requested.
 
-`src/components/ArtifactSandbox.astro` is the Blog Platform side of the
-executable-artifact boundary. Treat it as integration, not ownership:
-
-    Post / Blog Platform
-            |
-            v
-    ArtifactSandbox
-            |
-       isolation boundary
-            |
-            v
-    independent HTML + JavaScript artifact
-
-Sandboxing/isolation is a first-class architectural requirement.
-
-| Not yet a permanent contract in v0_1               |
-| -------------------------------------------------- |
-| Sandbox permissions                                |
-| iframe versus another execution mechanism          |
-| Artifact messaging APIs                            |
-| Artifact metadata format                           |
-| Build orchestration between artifacts and the blog |
-| Security policy                                    |
-
-Do not silently establish any of these while solving an unrelated task.
-
-### Runtime Boundaries
-
-Keep these contexts separate:
-
-| Context                      | Command/source                                      | Validates                                                                                           | Does not prove                                          |
-| ---------------------------- | --------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| Development runtime          | `npm run dev`                                       | Astro behavior in the host Node.js environment for local development and diagnosis                  | Production container behavior                           |
-| Application validation       | `npm run quality`                                   | Formatting, linting, Astro/type checking, and production build validation                           | That the production container starts and serves traffic |
-| Production packaging/runtime | `Dockerfile` -> container image -> Google Cloud Run | Cloud Run-compatible runtime assumptions, including port configuration and external network binding | Local development behavior                              |
-
-Before considering an implementation task complete, `npm run quality` must pass
-unless the task explicitly sets a different completion condition. Do not weaken,
-bypass, or remove quality checks to make a change pass.
-
-### GCP Deployment Flow and Tools
-
-`deploy_tools/scripts/gcp/` owns the deployment scripts. Docker builds and pushes
-the production image to Google Artifact Registry; the Google Cloud CLI (`gcloud`)
-deploys it to Cloud Run and queries the service URL.
-
-Before running any GCP script, source the environment in the same shell. From
-the repository root, the required deployment order is:
-
-```sh
-source deploy_tools/scripts/gcp/init_env.sh
-npm run quality
-bash deploy_tools/scripts/gcp/build_deployable_image.sh
-bash deploy_tools/scripts/gcp/deploy.sh
-bash deploy_tools/scripts/gcp/get_url.sh
-```
-
-Continue only after each command succeeds. `init_env.sh` must be sourced, not
-executed as a child process: it exports the project, region, Artifact Registry
-repository, image name/tag, derived `GCP_IMAGE_URI`, and Cloud Run service settings.
-Source it again in each new shell or after changing those settings. It does not
-authenticate tools or provision cloud resources.
-
-- `build_deployable_image.sh` builds and pushes a `linux/amd64` image and prints
-  its OS/architecture. It currently uses the fixed checkout location
-  `~/personal-blog-workspace/professional-blog/` as its build context.
-- `deploy.sh` deploys `GCP_IMAGE_URI` to the configured managed Cloud Run service
-  with unauthenticated access enabled.
-- `get_url.sh` prints the Cloud Run service URL; it does not validate site behavior.
-- `list_images.sh` is an optional Artifact Registry inspection utility.
-- `undeploy.sh` is optional for future service removal, outside the normal
-  deployment sequence. It deletes the Cloud Run service, not the stored images
-  or Artifact Registry repository. Use it only when service removal is intended.
-
-The optional scripts also require sourcing `init_env.sh` first. Deployment assumes
-a running Docker engine, authenticated `gcloud` with access to the target project,
-Docker authentication for the target registry, and an existing Artifact Registry
-repository. Keep application validation distinct from deployment and runtime
-verification. See README.md for the operator workflow.
-
-### Dependency Reasoning
-
-| Direction               | Meaning                     |
-| ----------------------- | --------------------------- |
-| Downstream dependencies | What the artifact relies on |
-| Upstream dependents     | What relies on the artifact |
-
-Prefer the smallest responsible change boundary. For planned changes, start
-with artifacts that have fewer upstream dependents and move toward broader
-exposure unless there is a concrete reason not to.
-
-Infer dependency direction from imports, references, runtime flow,
-configuration, content relationships, and observed behavior; never from
-directory hierarchy alone.
-
-### Diagnosis Guidelines
-
-Prioritize evidence in this order:
-
-| Rank | Evidence                                       |
-| ---- | ---------------------------------------------- |
-| 1    | Autonomous reproduction                        |
-| 2    | Error messages and stack traces                |
-| 3    | Relevant logs                                  |
-| 4    | Directly observable runtime behavior           |
-| 5    | Targeted diagnostic commands or existing tests |
-| 6    | Source/configuration inspection                |
-| 7    | Theoretical reasoning from source alone        |
-
-Source inspection should explain observed evidence, not replace reproduction
-when reproduction is practical. Separate observed facts, supported deductions,
-hypotheses, and unresolved uncertainty. Do not modify code only because a
-plausible explanation exists.
-
-When a task invokes the repository's troubleshooting skill, follow that skill's
-stricter procedure and output/approval requirements.
-
-### Change Discipline
-
-Prefer minimal changes that preserve architectural boundaries. Avoid
-opportunistic refactoring while addressing unrelated work.
-
-| Do not introduce prematurely                |
-| ------------------------------------------- |
-| Database infrastructure                     |
-| Authentication                              |
-| CMS infrastructure                          |
-| Caching                                     |
-| Messaging infrastructure                    |
-| A design system                             |
-| Framework coupling for executable artifacts |
-| Generalized artifact protocols              |
-
-Add abstractions, dependencies, framework features, services, or persistent
-infrastructure only when the task actually requires them. v0_1 exists to keep a
-small, understandable end-to-end foundation.
-
-### Agent Explanation Guidelines
-
-When explaining repository behavior, prefer semantic descriptions over source
-transcription.
-
-| Explain                     | Purpose                                   |
-| --------------------------- | ----------------------------------------- |
-| Artifact and responsibility | Clarifies the ownership boundary          |
-| Relevant symbols            | Grounds the explanation when names matter |
-| Dependencies and dependents | Shows both directions of impact           |
-| Runtime/data flow           | Explains how behavior happens             |
-| Supporting evidence         | Separates facts from inference            |
-
-Avoid large code excerpts unless exact syntax is the point. A useful explanation
-lets the reader understand artifact responsibilities and interactions without
-reconstructing the architecture from individual source lines.
-
-## Implemented Persistence and Runtime Boundaries
-
-`src/lib/persistence/` owns stored blog posts. Astro retrieves them at request time. Playground entries remain a separate static collection for sandboxed applications. Publishing is explicit; builds and server startup must not ingest or republish posts.
-
-- Models live one per file under `models/`. Record checks belong to models, relationship checks to `PersistenceService`, and physical integrity checks to `FileSystemAdapter`. Do not introduce an independent validation module.
-- Configuration lives in `config/persistence.json`; tests independently load `tests/config/persistence.json`. All operational settings must be explicit, with no hardcoded fallbacks. Paths resolve relative to the config file. Tests explicitly override the root with an absolute temporary directory.
-- The caller generates UUID v4 identifiers and Metadata dates. The application service receives an explicit clock and assigns Registry dates. Do not invent collision handling or synthetic timestamp increments; publication is sequential and well separated.
-- `local_database` is the configured application root and contains the tracked two-post baseline packaged in the deployable image. Persistence and runtime tests use isolated temporary roots and never modify this baseline.
-- The catalogue contains Registry/Metadata only. Listing reads no Post relationship arrays, text, or media and performs no discovery scan. It sorts solely by Registry timestamp descending and paginates strictly older than its UTC-millisecond cursor. Restart without a cursor to discover new posts.
-- Post retrieval resolves Registry membership before records. Runtime post/media routes return 400 for malformed identifiers, 404 for unknown membership, and 500 for corrupt stored data or configuration failures. Never expose internal paths or error details.
-- Graphic references use the explicit `{{graphic:identifier}}` convention described in README. Check the reconstructed whole body. Never normalize text or infer references from UUID-like prose.
-- Stage complete records privately, install without overwriting, and atomically replace the catalogue last. One writer per root; live readers only observe committed posts. Identical retries preserve Registry timestamps and bytes. No public update/delete/resume operation exists.
-- Run `npm run test:persistence`, `npm run build`, and `npm run test:runtime`, plus the required `npm run quality`. Runtime HTTP tests require a current build and permission to listen on localhost. Preserve coverage for exact bytes/text, configured limits, relationships, duplicate/conflict behavior, descending cursors, fresh reads, root isolation, and failure handling. Node 22.18+ supports the native TypeScript test command.
-
-### Astro runtime conventions
-
-- Blog posts use `/blog-post/<post-id>/`; the catalogue uses `/blog-post-catalogue/`. Do not restore static blog routes or discover migration sources through an Astro blog collection.
-- The homepage always loads the first catalogue page without a cursor. Catalogue URLs carry the current cursor in `next_page` and earlier cursors in repeated `prev_page` parameters. Preserve newest-first ordering and probe for another item before displaying an Older link.
-- `ASTRO_RUNTIME_CONFIG` selects an absolute runtime configuration path. `PERSISTENCE_ROOT` and `VISITOR_ORIGIN` support explicit overrides. Application and test configuration remain independent.
-- Playground pages use `/playground/<demo-app-name>/`. Their descriptions and applications remain outside persistence. Preserve `ArtifactSandbox.astro` and the independently packaged application assets.
-- Reconstruct stored HTML in `content_ids` order before resolving graphic references. Modify only the rendered representation.
-- The runtime image includes configuration and `local_database`; preparation manifests remain excluded. Container verification must work without mounting the host repository.
+For Python tooling, use a project-local `.venv`; do not install task dependencies into system Python or commit environments and caches.
+
+## Maintaining this guide
+
+Keep durable instructions and entry points here. Put detailed procedures and implementation explanations in the relevant README or owning artifact, and update pointers when those locations change.
+
+Use [agentknowledge](.codex/skills/agentknowledge/SKILL.md) when changes affect agent-facing navigation knowledge, including relevant artifacts and investigation starting points in `AGENTS.md`. Invoke it as `$agentknowledge <CHANGE_TRIGGER>`.
+
+Use [projectdocs](.codex/skills/projectdocs/SKILL.md) when changes require updates to business/domain or technical explanations in `README.md` or focused documentation. Invoke it as `$projectdocs <CHANGE_TRIGGER>`; substantial themes belong in dedicated documents linked from higher-level explanations.
+
+Both skills require `<CHANGE_TRIGGER>` to describe the changes prompting the update and identify the affected business/domain areas. Keep edits scoped to those changes and their direct consequences; never regenerate documentation or agent knowledge in its entirety.
